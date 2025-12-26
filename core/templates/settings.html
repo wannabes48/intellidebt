@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h4>System UI Settings</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Visual Theme</label>
+                        <select name="theme" class="form-select">
+                            <option value="light" {% if current_theme == 'light' %}selected{% endif %}>☀️ Light Mode</option>
+                            <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>🌙 Dark Mode</option>
+                        </select>
+                        <div class="form-text">Changes the background color of the sidebar and main area.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Rows Per Page</label>
+                        <select name="items_per_page" class="form-select">
+                            <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 rows</option>
+                            <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 rows</option>
+                            <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 rows</option>
+                        </select>
+                        <div class="form-text">Controls how many loans appear in lists.</div>
+                    </div>
+
+                    <hr>
+                    <button type="submit" class="btn btn-success w-100">Save Preferences</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

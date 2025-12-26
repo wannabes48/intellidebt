@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="alert alert-success text-center mt-5" role="alert">
+    <h4 class="alert-heading">Automation Complete!</h4>
+    <p>The system successfully checked all active loans.</p>
+    <hr>
+    <p class="mb-0">
+        <strong>{{ count }}</strong> overdue reminders have been generated and logged in the system.
+    </p>
+    <br>
+    <a href="{% url 'dashboard' %}" class="btn btn-primary">Return to Dashboard</a>
+</div>
+{% endblock %}

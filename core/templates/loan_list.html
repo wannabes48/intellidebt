@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>All Loans Directory</h2>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="">-- All Statuses --</option>
+                    <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Defaulted" {% if status_filter == 'Defaulted' %}selected{% endif %}>Defaulted</option>
+                    <option value="Paid" {% if status_filter == 'Paid' %}selected{% endif %}>Paid</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="risk" class="form-select">
+                    <option value="">-- All Risk Levels --</option>
+                    <option value="high" {% if risk_filter == 'high' %}selected{% endif %}>High Risk (> 50%)</option>
+                    <option value="low" {% if risk_filter == 'low' %}selected{% endif %}>Low Risk (< 50%)</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Loan ID</th>
+                        <th>Client</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Risk Score</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in page_obj %}
+                    <tr>
+                        <td>#{{ loan.id }}</td>
+                        <td>
+                            <strong>{{ loan.client.name }}</strong><br>
+                            <small class="text-muted">{{ loan.client.employment_type }}</small>
+                        </td>
+                        <td>${{ loan.amount|stringformat:".2f" }}</td>
+                        <td>
+                            {% if loan.status == 'Active' %}
+                                <span class="badge bg-primary">Active</span>
+                            {% elif loan.status == 'Defaulted' %}
+                                <span class="badge bg-danger">Defaulted</span>
+                            {% else %}
+                                <span class="badge bg-success">Paid</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if loan.predicted_default_risk %}
+                                {% if loan.predicted_default_risk > 0.7 %}
+                                    <span class="text-danger fw-bold">{{ loan.predicted_default_risk|stringformat:".2f" }}</span>
+                                {% else %}
+                                    <span class="text-success">{{ loan.predicted_default_risk|stringformat:".2f" }}</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-dark">Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        <nav>
+            <ul class="pagination mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a></li>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

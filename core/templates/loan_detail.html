@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4>Loan Details: {{ loan.client.name }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6"><strong>Amount:</strong> ${{ loan.amount|stringformat:".2f" }}</div>
+                    <div class="col-md-6"><strong>Status:</strong> 
+                        <span class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %}">
+                            {{ loan.status }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6"><strong>Interest Rate:</strong> {{ loan.interest_rate }}%</div>
+                    <div class="col-md-6"><strong>Due Date:</strong> {{ loan.due_date }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6"><strong>Outstanding:</strong> ${{ loan.outstanding_amount|stringformat:".2f" }}</div>
+                    <div class="col-md-6"><strong>Missed Payments:</strong> {{ loan.missed_payments }}</div>
+                </div>
+                <hr>
+                <h5>Client Profile</h5>
+                <p><strong>Employment:</strong> {{ loan.client.employment_type }} | <strong>Income:</strong> ${{ loan.client.income|stringformat:".2f" }}</p>
+                <p><strong>Contact:</strong> {{ loan.client.contact }}</p>
+                <div class="mt-4">
+                    {% if loan.status != 'Paid' %}
+                        <a href="{% url 'add_payment' loan.id %}" class="btn btn-success w-100">
+                            💰 Record Payment
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary w-100" disabled>Loan Fully Paid</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🤖 AI Risk Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="mt-4 border-top pt-3">
+                    <h6><strong>Recommended Action:</strong></h6>
+                    {% if loan.predicted_default_risk > 0.5 %}
+                        <div class="alert alert-warning py-2">
+                            <small>⚠️ High/Medium Risk Detected.</small>
+                        </div>
+                        <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-outline-dark w-100">
+                            <i class="bi bi-file-earmark-text"></i> Generate Settlement Offer
+                        </a>
+                    {% else %}
+                        <div class="alert alert-success py-2">
+                            <small>✅ Low Risk. Standard collection.</small>
+                        </div>
+                    {% endif %}
+                </div>
+                <h6><strong>Predicted Risk Score:</strong> 
+                    {% if loan.predicted_default_risk %}
+                        {{ loan.predicted_default_risk|stringformat:".2f" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </h6>
+                
+                <div class="progress mb-3">
+                    <div class="progress-bar bg-danger" role="progressbar" 
+                         style="width: {{ loan.predicted_default_risk|default:0|stringformat:'.2f'|slice:':2' }}0%">
+                    </div>
+                </div>
+                
+                <h6><strong>Why this score?</strong> (Explainable AI)</h6>
+                <ul class="list-group list-group-flush">
+                    {% for reason in explanation %}
+                        <li class="list-group-item text-danger"><small>• {{ reason }}</small></li>
+                    {% empty %}
+                        <li class="list-group-item text-success"><small>• No specific risk factors detected.</small></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+</div>
+{% endblock %}

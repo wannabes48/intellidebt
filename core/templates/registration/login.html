@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Specific Login Styles */
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .login-card {
+        max-width: 400px;
+        width: 100%;
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .brand-logo {
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="text-center mb-5">
+            <div class="mb-3">
+                <i class="bi bi-shield-lock-fill text-primary display-4"></i>
+            </div>
+            <h2 class="brand-logo">INTELLIDEBT MANAGER</h2>
+            <p class="text-muted small">Secure Financial Access Terminal</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-floating mb-3">
+                <input type="text" name="username" class="form-control" id="floatingInput" placeholder="ID">
+                <label for="floatingInput">Officer ID</label>
+            </div>
+            <div class="form-floating mb-4">
+                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
+                <label for="floatingPassword">Secure Key</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">
+                AUTHENTICATE <i class="bi bi-arrow-right ms-2"></i>
+            </button>
+        </form>
+
+        <div class="mt-4 text-center">
+            <small class="text-muted d-block mb-1">
+                <i class="bi bi-lock"></i> 256-bit Encryption Active
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

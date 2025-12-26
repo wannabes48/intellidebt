@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Record Payment</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Client:</strong> {{ loan.client.name }}</p>
+                <p><strong>Outstanding Balance:</strong> ${{ loan.outstanding_amount|stringformat:".2f" }}</p>
+                <hr>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Payment Amount ($)</label>
+                        {{ form.amount }}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Confirm Payment</button>
+                        <a href="{% url 'loan_detail' loan.id %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

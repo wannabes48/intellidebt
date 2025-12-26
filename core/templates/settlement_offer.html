@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between mb-3 no-print">
+            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="bi bi-printer"></i> Print Official Letter
+            </button>
+        </div>
+
+        <div class="card shadow-lg p-5" style="border: 1px solid #ddd; background: #fff;">
+            <div class="text-center mb-5">
+                <h3>SmartLoan Financial Services</h3>
+                <p class="text-muted">123 Recovery Lane, Finance City</p>
+                <hr>
+            </div>
+
+            <div class="mb-4">
+                <p><strong>Date:</strong> {{ date }}</p>
+                <p><strong>To:</strong> {{ loan.client.name }}</p>
+                <p><strong>Address:</strong> {{ loan.client.address }}</p>
+            </div>
+
+            <h5 class="text-center text-uppercase fw-bold mb-4">Subject: One-Time Settlement Offer</h5>
+
+            <p>Dear {{ loan.client.name }},</p>
+
+            <p>
+                We are writing to you regarding your outstanding loan (ID: {{ loan.id }}) of 
+                <strong>${{ loan.outstanding_amount|stringformat:".2f" }}</strong>.
+            </p>
+
+            <p>
+                Our automated risk assessment system has reviewed your account. 
+                Due to your current status, we are authorized to offer you a 
+                <strong>One-Time Settlement (OTS)</strong> to close this loan immediately.
+            </p>
+
+            <div class="alert alert-success border-success text-center p-4 my-4">
+                <h4>Settlement Offer</h4>
+                <p class="mb-0">Pay only: <strong>${{ settlement_amount|stringformat:".2f" }}</strong></p>
+                <small class="text-muted">(Discount Applied: {{ discount_percent }}% - You save ${{ discount_amount|stringformat:".2f" }})</small>
+            </div>
+
+            <p>
+                This offer is valid for <strong>7 days</strong> from the date of this letter. 
+                Upon receipt of this amount, your loan status will be updated to "Settled/Paid" 
+                and a completion certificate will be issued.
+            </p>
+
+            <br><br>
+            <div class="row">
+                <div class="col-6">
+                    <p>Sincerely,</p>
+                    <br>
+                    <p><strong>Recovery Department</strong><br>SmartLoan System</p>
+                </div>
+                <div class="col-6 text-end">
+                    <div class="border p-2 bg-light d-inline-block text-start no-print">
+                        <small><strong>Internal AI Note:</strong><br>{{ reason }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hide buttons when printing */
+    @media print {
+        .no-print, nav, #sidebar-wrapper { display: none !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        #page-content-wrapper { margin: 0; padding: 0; }
+        body { background: white; }
+    }
+</style>
+{% endblock %}

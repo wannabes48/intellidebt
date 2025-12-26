@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4>Create New Loan Application</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Select Client</label>
+                        {{ form.client }}
+                        <div class="form-text">
+                            ML Model will use this client's financial score for risk prediction.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Loan Amount ($)</label>
+                        {{ form.amount }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Interest Rate (%)</label>
+                        {{ form.interest_rate }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        {{ form.due_date }}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Submit & Calculate Risk</button>
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

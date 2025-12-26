@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-19z%4&cr5s2%8dc%pwrxq8w^!w=4v92u&k(=h^)-cf-xav_q=w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.vercel.app', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['.vercel.app', 'intellidebt-manager.onrender.com', '127.0.0.1', 'localhost']
 
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'

@@ -9,12 +9,12 @@
             </div>
             <div class="card-body">
                 <p><strong>Client:</strong> {{ loan.client.name }}</p>
-                <p><strong>Outstanding Balance:</strong> ${{ loan.outstanding_amount|stringformat:".2f" }}</p>
+                <p><strong>Outstanding Balance:</strong> KES{{ loan.outstanding_amount|stringformat:".2f" }}</p>
                 <hr>
                 <form method="post">
                     {% csrf_token %}
                     <div class="mb-3">
-                        <label class="form-label">Payment Amount ($)</label>
+                        <label class="form-label">Payment Amount (KES)</label>
                         {{ form.amount }}
                     </div>
                     <div class="d-grid gap-2">

@@ -31,7 +31,7 @@
 
             <p>
                 We are writing to you regarding your outstanding loan (ID: {{ loan.id }}) of 
-                <strong>${{ loan.outstanding_amount|stringformat:".2f" }}</strong>.
+                <strong>KES {{ loan.outstanding_amount|stringformat:".2f" }}</strong>.
             </p>
 
             <p>
@@ -42,8 +42,8 @@
 
             <div class="alert alert-success border-success text-center p-4 my-4">
                 <h4>Settlement Offer</h4>
-                <p class="mb-0">Pay only: <strong>${{ settlement_amount|stringformat:".2f" }}</strong></p>
-                <small class="text-muted">(Discount Applied: {{ discount_percent }}% - You save ${{ discount_amount|stringformat:".2f" }})</small>
+                <p class="mb-0">Pay only: <strong>KES {{ settlement_amount|stringformat:".2f" }}</strong></p>
+                <small class="text-muted">(Discount Applied: {{ discount_percent }}% - You save KES {{ discount_amount|stringformat:".2f" }})</small>
             </div>
 
             <p>

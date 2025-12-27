@@ -1,45 +1,54 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <h2>All Loans Directory</h2>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-4">
+<div class="card mb-4 border-0 shadow-sm">
+    <div class="card-body bg-light rounded">
+        <form method="get" class="row g-2">
+            
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Search by Name or Loan ID..." value="{{ query|default:'' }}">
+                </div>
+            </div>
+
+            <div class="col-md-3">
                 <select name="status" class="form-select">
-                    <option value="">-- All Statuses --</option>
+                    <option value="">Status: All</option>
                     <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
                     <option value="Defaulted" {% if status_filter == 'Defaulted' %}selected{% endif %}>Defaulted</option>
                     <option value="Paid" {% if status_filter == 'Paid' %}selected{% endif %}>Paid</option>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <select name="risk" class="form-select">
-                    <option value="">-- All Risk Levels --</option>
+                    <option value="">Risk: All</option>
                     <option value="high" {% if risk_filter == 'high' %}selected{% endif %}>High Risk (> 50%)</option>
                     <option value="low" {% if risk_filter == 'low' %}selected{% endif %}>Low Risk (< 50%)</option>
                 </select>
             </div>
-            <div class="col-md-4">
-                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">Go</button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card shadow">
+<div class="card shadow border-0">
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Loan ID</th>
+                        <th>ID</th>
                         <th>Client</th>
                         <th>Amount</th>
-                        <th>Status</th>
+                        <th>Tenure</th> <th>Status</th>
                         <th>Risk Score</th>
                         <th>Action</th>
                     </tr>
@@ -47,35 +56,46 @@
                 <tbody>
                     {% for loan in page_obj %}
                     <tr>
-                        <td>#{{ loan.id }}</td>
+                        <td><span class="badge bg-secondary">#{{ loan.id }}</span></td>
                         <td>
                             <strong>{{ loan.client.name }}</strong><br>
-                            <small class="text-muted">{{ loan.client.employment_type }}</small>
+                            <small class="text-muted">{{ loan.client.contact }}</small>
                         </td>
-                        <td>${{ loan.amount|stringformat:".2f" }}</td>
+                        <td>KES {{ loan.amount|stringformat:".2f" }}</td>
+                        <td>{{ loan.tenure }} mths</td>
                         <td>
                             {% if loan.status == 'Active' %}
-                                <span class="badge bg-primary">Active</span>
+                                <span class="badge bg-primary bg-opacity-10 text-primary">Active</span>
                             {% elif loan.status == 'Defaulted' %}
-                                <span class="badge bg-danger">Defaulted</span>
+                                <span class="badge bg-danger bg-opacity-10 text-danger">Defaulted</span>
                             {% else %}
-                                <span class="badge bg-success">Paid</span>
+                                <span class="badge bg-success bg-opacity-10 text-success">Paid</span>
                             {% endif %}
                         </td>
                         <td>
                             {% if loan.predicted_default_risk %}
                                 {% if loan.predicted_default_risk > 0.7 %}
-                                    <span class="text-danger fw-bold">{{ loan.predicted_default_risk|stringformat:".2f" }}</span>
+                                    <div class="progress" style="height: 6px; width: 80px;">
+                                        <div class="progress-bar bg-danger" style="width: {{ loan.predicted_default_risk|stringformat:'.2f'|slice:':2' }}0%"></div>
+                                    </div>
+                                    <small class="text-danger fw-bold">{{ loan.predicted_default_risk|stringformat:".2f" }}</small>
                                 {% else %}
-                                    <span class="text-success">{{ loan.predicted_default_risk|stringformat:".2f" }}</span>
+                                    <div class="progress" style="height: 6px; width: 80px;">
+                                        <div class="progress-bar bg-success" style="width: {{ loan.predicted_default_risk|stringformat:'.2f'|slice:':2' }}0%"></div>
+                                    </div>
+                                    <small class="text-success">{{ loan.predicted_default_risk|stringformat:".2f" }}</small>
                                 {% endif %}
                             {% else %}
                                 -
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-dark">Details</a>
+                            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">View</a>
                         </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No loans found matching your criteria.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -83,16 +103,16 @@
         </div>
     </div>
     
-    <div class="card-footer d-flex justify-content-between align-items-center">
-        <span>Showing page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+        <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
         <nav>
-            <ul class="pagination mb-0">
+            <ul class="pagination pagination-sm mb-0">
                 {% if page_obj.has_previous %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo; Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&risk={{ risk_filter|default:'' }}">&laquo;</a></li>
                 {% endif %}
                 
                 {% if page_obj.has_next %}
-                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next &raquo;</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&risk={{ risk_filter|default:'' }}">&raquo;</a></li>
                 {% endif %}
             </ul>
         </nav>

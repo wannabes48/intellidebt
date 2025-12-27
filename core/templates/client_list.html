@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">Client Directory</h2>
+    <a href="{% url 'create_client' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus-fill"></i> Add New Client
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mx-auto">
+        <form method="get" class="input-group input-group-lg shadow-sm">
+            <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control border-start-0" placeholder="Search by Name, Phone, or Job..." value="{{ query|default:'' }}">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for client in page_obj %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-0 ai-card-hover">
+            <div class="card-body text-center p-4">
+                <div class="mb-3 position-relative d-inline-block">
+                    <img src="https://ui-avatars.com/api/?name={{ client.name }}&background=2563eb&color=fff&size=128" 
+                         class="rounded-circle shadow-sm" alt="Profile" style="width: 80px; height: 80px; object-fit: cover;">
+                    <span class="position-absolute bottom-0 start-100 translate-middle p-2 bg-success border border-white rounded-circle">
+                        <span class="visually-hidden">Active</span>
+                    </span>
+                </div>
+
+                <h5 class="fw-bold mb-1">{{ client.name }}</h5>
+                <p class="text-muted small mb-3">{{ client.employment_type }}</p>
+
+                <div class="row text-start bg-light rounded p-3 mb-3 mx-1">
+                    <div class="col-6 mb-2">
+                        <small class="text-muted d-block text-uppercase" style="font-size:0.65rem;">Contact</small>
+                        <span class="small fw-semibold text-truncate d-block">{{ client.contact }}</span>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <small class="text-muted d-block text-uppercase" style="font-size:0.65rem;">Income</small>
+                        <span class="small fw-semibold">KES {{ client.income|stringformat:".0f" }}</span>
+                    </div>
+                    <div class="col-12">
+                        <small class="text-muted d-block text-uppercase" style="font-size:0.65rem;">Location</small>
+                        <span class="small text-truncate d-block">{{ client.address }}</span>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'loan_list' %}?q={{ client.name }}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i> View Loans
+                    </a>
+                    
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ client.id }}">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteModal{{ client.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Deletion</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Are you sure you want to delete <strong>{{ client.name }}</strong>?</p>
+                    <p class="text-danger small mt-2 mb-0"><strong>Warning:</strong> This will also permanently delete all loan records associated with this client.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{% url 'delete_client' client.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <div class="text-muted display-1"><i class="bi bi-people"></i></div>
+        <p class="lead">No clients found in the directory.</p>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-4 d-flex justify-content-center">
+    {% if page_obj.has_other_pages %}
+    <nav>
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query|default:'' }}">&laquo;</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">Page {{ page_obj.number }}</span></li>
+            {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query|default:'' }}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<style>
+    .ai-card-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .ai-card-hover:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+</style>
+{% endblock %}

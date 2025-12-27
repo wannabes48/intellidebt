@@ -12,4 +12,6 @@ urlpatterns = [
     path('run-reminders/', views.trigger_reminders, name='trigger_reminders'),
     path('loan/<int:loan_id>/pay/', views.add_payment, name='add_payment'),
     path('loan/<int:loan_id>/settlement/', views.generate_settlement, name='generate_settlement'),
+    path('clients/', views.client_list, name='client_list'), # New
+    path('client/<int:client_id>/delete/', views.delete_client, name='delete_client'),
 ]

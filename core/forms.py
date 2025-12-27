@@ -5,12 +5,14 @@ class LoanForm(forms.ModelForm):
     class Meta:
         model = Loan
         # We exclude status, predicted_risk, etc. because those are system-generated
-        fields = ['client', 'amount', 'interest_rate', 'due_date']
+        fields = ['client', 'amount', 'interest_rate', 'tenure', 'collateral_value', 'due_date']
         widgets = {
             'due_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'client': forms.Select(attrs={'class': 'form-select'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'interest_rate': forms.NumberInput(attrs={'class': 'form-control'}),
+            'tenure': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Months (e.g. 12)'}),
+            'collateral_value': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Collateral Value ($)'}),
         }
 
 class ClientForm(forms.ModelForm):

@@ -11,59 +11,43 @@ from django.contrib import messages
 from django.core.paginator import Paginator # For pagination
 # In core/views.py
 
+# In core/views.py
+
 @login_required
 def dashboard(request):
+    # 1. Standard Stats
     total_loans = Loan.objects.count()
     active_defaults = Loan.objects.filter(status='Defaulted').count()
-
-    #Search Logic
+    
+    # 2. Search Logic
     query = request.GET.get('q')
+    search_match = None  # Variable to hold the single result for the modal
+
     if query:
-        # Search by Client Name OR Loan ID
+        # Search by Name or ID
         recent_loans = Loan.objects.select_related('client').filter(
             Q(client__name__icontains=query) | Q(id__icontains=query)
-        ).order_by('-id')[:50] # Limit to 50 results
+        ).order_by('-id')[:50]
+        
+        # If we find exactly one match (or you want to show the top match), grab it
+        if recent_loans.exists():
+            search_match = recent_loans.first() # Grab the top result for the "Window"
     else:
-        # Default: Show recent 10
         recent_loans = Loan.objects.select_related('client').order_by('-id')[:10]
-    
-    # Get active loans with all the new fields
-    active_loans = Loan.objects.select_related('client').filter(status__in=['Active', 'Defaulted'])
-    recent_loans = Loan.objects.select_related('client').order_by('-id')[:10]
-    active_loans_for_stats = Loan.objects.select_related('client').filter(status__in=['Active', 'Defaulted'])
-    
-    ml_input_data = []
-    for loan in active_loans_for_stats:
-        # Pass ALL the fields required by the ML model
-        ml_input_data.append({
-            'Age': loan.client.age,
-            'Monthly_Income': loan.client.income,
-            'Loan_Amount': loan.amount,
-            'Loan_Tenure': loan.tenure,
-            'Interest_Rate': loan.interest_rate,
-            'Collateral_Value': loan.collateral_value,
-            'Outstanding_Loan_Amount': loan.outstanding_amount,
-            'Monthly_EMI': loan.monthly_emi,
-            'Num_Missed_Payments': loan.missed_payments,
-            'Days_Past_Due': loan.days_past_due
-        })
 
-    # The ML system will now use the real database data!
+    # ... (Keep existing Analytics/Segmentation logic here) ...
+    # (Copied from your previous code for segmentation)
+    ml_input_data = [{'Age': l.client.age, 'Monthly_Income': l.client.income, 'Loan_Amount': l.amount, 'Loan_Tenure': l.tenure, 'Interest_Rate': l.interest_rate, 'Collateral_Value': l.collateral_value, 'Outstanding_Loan_Amount': l.amount, 'Monthly_EMI': l.monthly_emi, 'Num_Missed_Payments': l.missed_payments, 'Days_Past_Due': l.days_past_due} for l in Loan.objects.filter(status__in=['Active', 'Defaulted'])]
     segments = ml_system.get_client_segments(ml_input_data)
-    
-    segment_counts = {
+    segment_counts = {k: v for k, v in {
         "Steady Repayer": segments.count("Steady Repayer"),
         "High Risk": segments.count("High Risk"),
         "Early Bird": segments.count("Early Bird"),
-        # Add others if your ML model outputs them
         "Moderate Income, High Loan Burden": segments.count("Moderate Income, High Loan Burden"),
         "High Income, Low Default Risk": segments.count("High Income, Low Default Risk"),
         "Moderate Income, Medium Risk": segments.count("Moderate Income, Medium Risk"),
         "High Loan, Higher Default Risk": segments.count("High Loan, Higher Default Risk"),
-    }
-    
-    # Clean up zero counts for cleaner chart
-    segment_counts = {k: v for k, v in segment_counts.items() if v > 0}
+    }.items() if v > 0}
 
     context = {
         'total_loans': total_loans,
@@ -71,6 +55,7 @@ def dashboard(request):
         'segment_data': json.dumps(segment_counts),
         'recent_loans': recent_loans,
         'query': query,
+        'search_match': search_match, # <--- PASS THIS NEW VARIABLE
     }
     return render(request, 'dashboard.html', context)
 
@@ -81,28 +66,44 @@ def create_loan(request):
         if form.is_valid():
             loan = form.save(commit=False)
             
-            # --- Objective A & C Integration: Predict Risk ---
-            risk_prob = ml_system.predict_risk(
-                loan.client.financial_score, 
-                loan.amount, 
-                loan.client.income
-            )
-            explanation = ml_system.explain_risk(
-                loan.client.financial_score, 
-                loan.amount, 
-                loan.client.income
-            )
+            # --- CRITICAL FIX: Set Initial Outstanding Amount ---
+            # If this is missing, the DB might reject the save
+            loan.outstanding_amount = loan.amount
+            loan.status = 'Active' # Default status
             
-            loan.predicted_default_risk = risk_prob
-            loan.risk_explanation = explanation
+            # --- ML Prediction Logic ---
+            ml_features = {
+                'Age': loan.client.age,
+                'Monthly_Income': loan.client.income,
+                'Loan_Amount': loan.amount,
+                'Loan_Tenure': loan.tenure,
+                'Interest_Rate': loan.interest_rate,
+                'Collateral_Value': loan.collateral_value,
+                'Outstanding_Loan_Amount': loan.amount, 
+                'Monthly_EMI': (loan.amount / loan.tenure) if loan.tenure > 0 else 0,
+                'Num_Missed_Payments': 0,
+                'Days_Past_Due': 0
+            }
             
-            # Auto-flag as Default risk if probability > 70%
-            if risk_prob > 0.7:
-                # You might add a flag or alert here
-                pass
+            try:
+                risk_prob, strategy = ml_system.predict_risk(ml_features)
+                explanation = ml_system.explain_prediction(ml_features)
                 
+                loan.predicted_default_risk = risk_prob
+                loan.risk_explanation = ", ".join(explanation)
+            except Exception as e:
+                # Fallback if ML fails, so we can still save the loan
+                print(f"ML Error: {e}")
+                loan.predicted_default_risk = 0.5
+                loan.risk_explanation = "Manual Review Required (ML Error)"
+
             loan.save()
+            messages.success(request, f"Loan Created! Risk Score: {loan.predicted_default_risk:.2f}")
             return redirect('dashboard')
+        else:
+            # Debugging: Print errors to console so you can see them
+            print("FORM ERRORS:", form.errors)
+            messages.error(request, "Please correct the errors below.")
     else:
         form = LoanForm()
     return render(request, 'loan_form.html', {'form': form})
@@ -236,8 +237,6 @@ def add_payment(request, loan_id):
     
     return render(request, 'add_payment.html', {'form': form, 'loan': loan})
 
-# In core/views.py
-
 @login_required
 def generate_settlement(request, loan_id):
     loan = get_object_or_404(Loan, pk=loan_id)
@@ -279,10 +278,18 @@ def generate_settlement(request, loan_id):
 
 @login_required
 def loan_list(request):
-    # 1. Base Query
+    # 1. Start with all loans
     loans = Loan.objects.select_related('client').order_by('-id')
     
-    # 2. Filtering Logic
+    # 2. SEARCH LOGIC (Name or ID)
+    query = request.GET.get('q')
+    if query:
+        loans = loans.filter(
+            Q(client__name__icontains=query) | 
+            Q(id__icontains=query)
+        )
+
+    # 3. FILTER LOGIC (Status & Risk)
     status_filter = request.GET.get('status')
     if status_filter:
         loans = loans.filter(status=status_filter)
@@ -293,7 +300,7 @@ def loan_list(request):
     elif risk_filter == 'low':
         loans = loans.filter(predicted_default_risk__lte=0.5)
 
-    # 3. Pagination (Get per_page from settings or default to 10)
+    # 4. Pagination
     per_page = request.session.get('ui_items_per_page', 10)
     paginator = Paginator(loans, per_page) 
     page_number = request.GET.get('page')
@@ -301,6 +308,7 @@ def loan_list(request):
     
     context = {
         'page_obj': page_obj,
+        'query': query, # Pass back to template
         'status_filter': status_filter,
         'risk_filter': risk_filter
     }
@@ -325,3 +333,40 @@ def settings_view(request):
         'current_theme': current_theme, 
         'current_per_page': current_per_page
     })
+
+
+@login_required
+def client_list(request):
+    # 1. Base Query
+    clients = Client.objects.all().order_by('-id')
+    
+    # 2. Search Logic
+    query = request.GET.get('q')
+    if query:
+        clients = clients.filter(
+            Q(name__icontains=query) | 
+            Q(contact__icontains=query) |
+            Q(employment_type__icontains=query)
+        )
+
+    # 3. Pagination (Grid of 9 cards per page looks good)
+    paginator = Paginator(clients, 9) 
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+    }
+    return render(request, 'client_list.html', context)
+
+@login_required
+def delete_client(request, client_id):
+    client = get_object_or_404(Client, pk=client_id)
+    
+    if request.method == 'POST':
+        client.delete()
+        messages.success(request, f"Client '{client.name}' and all associated loans deleted.")
+        return redirect('client_list')
+    
+    return render(request, 'confirm_delete.html', {'object': client, 'type': 'Client'})

@@ -9,7 +9,7 @@
             </div>
             <div class="card-body">
                 <div class="row mb-3">
-                    <div class="col-md-6"><strong>Amount:</strong> ${{ loan.amount|stringformat:".2f" }}</div>
+                    <div class="col-md-6"><strong>Amount:</strong> KES {{ loan.amount|stringformat:".2f" }}</div>
                     <div class="col-md-6"><strong>Status:</strong> 
                         <span class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %}">
                             {{ loan.status }}
@@ -21,12 +21,12 @@
                     <div class="col-md-6"><strong>Due Date:</strong> {{ loan.due_date }}</div>
                 </div>
                 <div class="row mb-3">
-                    <div class="col-md-6"><strong>Outstanding:</strong> ${{ loan.outstanding_amount|stringformat:".2f" }}</div>
+                    <div class="col-md-6"><strong>Outstanding:</strong> KES {{ loan.outstanding_amount|stringformat:".2f" }}</div>
                     <div class="col-md-6"><strong>Missed Payments:</strong> {{ loan.missed_payments }}</div>
                 </div>
                 <hr>
                 <h5>Client Profile</h5>
-                <p><strong>Employment:</strong> {{ loan.client.employment_type }} | <strong>Income:</strong> ${{ loan.client.income|stringformat:".2f" }}</p>
+                <p><strong>Employment:</strong> {{ loan.client.employment_type }} | <strong>Income:</strong> KES {{ loan.client.income|stringformat:".2f" }}</p>
                 <p><strong>Contact:</strong> {{ loan.client.contact }}</p>
                 <div class="mt-4">
                     {% if loan.status != 'Paid' %}

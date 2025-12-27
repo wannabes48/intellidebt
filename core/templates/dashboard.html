@@ -167,7 +167,7 @@
                                     <strong>{{ loan.client.name }}</strong><br>
                                     <small class="text-muted">{{ loan.client.employment_type }}</small>
                                 </td>
-                                <td>${{ loan.amount|stringformat:".2f" }}</td> <td>
+                                <td>KES {{ loan.amount|stringformat:".2f" }}</td> <td>
                                     {% if loan.status == 'Active' %}
                                         <span class="badge bg-primary">Active</span>
                                     {% elif loan.status == 'Defaulted' %}
@@ -204,4 +204,70 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="searchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-search me-2"></i> Search Result Found
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                {% if search_match %}
+                <div class="text-center mb-4">
+                    <div class="display-6 fw-bold mb-1">{{ search_match.client.name }}</div>
+                    <span class="badge bg-light text-dark border">Loan ID: #{{ search_match.id }}</span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded text-center">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.7rem;">Amount</small>
+                            <span class="fw-bold fs-5">${{ search_match.amount|stringformat:".2f" }}</span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded text-center">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.7rem;">Risk Score</small>
+                            {% if search_match.predicted_default_risk > 0.5 %}
+                                <span class="fw-bold fs-5 text-danger">{{ search_match.predicted_default_risk|stringformat:".2f" }}</span>
+                            {% else %}
+                                <span class="fw-bold fs-5 text-success">{{ search_match.predicted_default_risk|stringformat:".2f" }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <h6 class="text-muted text-uppercase small border-bottom pb-2">Status</h6>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span class="badge {% if search_match.status == 'Active' %}bg-primary{% elif search_match.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %} p-2">
+                            {{ search_match.status }}
+                        </span>
+                        <span class="text-muted small">Due: {{ search_match.due_date }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                {% if search_match %}
+                <a href="{% url 'loan_detail' search_match.id %}" class="btn btn-primary">
+                    View Full Details <i class="bi bi-arrow-right"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if query and search_match %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var myModal = new bootstrap.Modal(document.getElementById('searchModal'));
+        myModal.show();
+    });
+</script>
+{% endif %}
 {% endblock %}

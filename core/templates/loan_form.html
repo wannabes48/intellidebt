@@ -2,42 +2,68 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <div class="card shadow">
             <div class="card-header bg-primary text-white">
-                <h4>Create New Loan Application</h4>
+                <h4>Create New Loan</h4>
             </div>
             <div class="card-body">
+                {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the following errors:</strong>
+                        <ul>
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+
                 <form method="post">
                     {% csrf_token %}
                     
-                    <div class="mb-3">
-                        <label class="form-label">Select Client</label>
-                        {{ form.client }}
-                        <div class="form-text">
-                            ML Model will use this client's financial score for risk prediction.
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Select Client</label>
+                            {{ form.client }}
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Loan Amount ($)</label>
-                        {{ form.amount }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Loan Amount (KES)</label>
+                            {{ form.amount }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Interest Rate (%)</label>
+                            {{ form.interest_rate }}
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Interest Rate (%)</label>
-                        {{ form.interest_rate }}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Tenure (Months)</label>
+                            {{ form.tenure }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Collateral Value (KES)</label>
+                            {{ form.collateral_value }}
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Due Date</label>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Due Date</label>
                         {{ form.due_date }}
                     </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success">Submit & Calculate Risk</button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
-                    </div>
+                    <button type="submit" class="btn btn-success w-100 py-2">
+                        Calculate Risk & Submit Application
+                    </button>
                 </form>
             </div>
         </div>

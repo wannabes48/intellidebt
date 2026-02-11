@@ -132,4 +132,46 @@ class LoanMLSystem:
         # ... (simplified fallback if needed) ...
         pass
 
+    def recommend_channel(self, risk_score, days_past_due, outstanding_amount=None):
+
+        # 1. Check for Paid Status
+        if outstanding_amount is not None and outstanding_amount <= 0:
+            return {
+                'method': 'Loan Closed',
+                'icon': 'bi-check-circle-fill',
+                'color': 'success',
+                'action': 'No further action required. Good job!'
+            }
+        """
+        Determines the most effective collection channel based on risk.
+        """
+        if risk_score > 0.8:
+            return {
+                'method': 'Legal Action',
+                'icon': 'bi-hammer',
+                'color': 'danger',
+                'action': 'Prepare Legal Notice'
+            }
+        elif risk_score > 0.6 or days_past_due > 60:
+            return {
+                'method': 'Physical Visit',
+                'icon': 'bi-door-open-fill',
+                'color': 'warning',
+                'action': 'Schedule Field Visit'
+            }
+        elif risk_score > 0.4 or days_past_due > 30:
+            return {
+                'method': 'Phone Call',
+                'icon': 'bi-telephone-fill',
+                'color': 'info',
+                'action': 'Call Client'
+            }
+        else:
+            return {
+                'method': 'SMS / Email',
+                'icon': 'bi-chat-dots-fill',
+                'color': 'success',
+                'action': 'Send Reminder'
+            }
+
 ml_system = LoanMLSystem()

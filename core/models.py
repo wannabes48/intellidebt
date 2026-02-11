@@ -64,3 +64,20 @@ class Reminder(models.Model):
     message = models.TextField()
     date_sent = models.DateTimeField(auto_now_add=True)
     method = models.CharField(max_length=10, default='SMS')
+
+class CollectionLog(models.Model):
+    CHANNEL_CHOICES = [
+        ('SMS', 'SMS'),
+        ('Email', 'Email'),
+        ('Call', 'Phone Call'),
+        ('Visit', 'Physical Visit'),
+        ('Legal', 'Legal Action'),
+    ]
+    
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='logs')
+    interaction_date = models.DateTimeField(auto_now_add=True)
+    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES)
+    officer_notes = models.TextField()
+    
+    def __str__(self):
+        return f"{self.channel} - {self.loan.client.name}"

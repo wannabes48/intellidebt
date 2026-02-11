@@ -1,9 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from .models import Loan, Client, Reminder
+from .models import Loan, Client, Reminder, CollectionLog, Payment
 from .forms import LoanForm, ClientForm, PaymentForm# You assume a ModelForm exists
 from .ml_utils import ml_system
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Count
 from datetime import date
 from .ml_utils import ml_system
 import json
@@ -18,6 +18,8 @@ def dashboard(request):
     # 1. Standard Stats
     total_loans = Loan.objects.count()
     active_defaults = Loan.objects.filter(status='Defaulted').count()
+    active_loans_count = Loan.objects.filter(status='Active').count()
+    total_disbursed = Loan.objects.aggregate(Sum('amount'))['amount__sum'] or 0
     
     # 2. Search Logic
     query = request.GET.get('q')
@@ -34,6 +36,9 @@ def dashboard(request):
             search_match = recent_loans.first() # Grab the top result for the "Window"
     else:
         recent_loans = Loan.objects.select_related('client').order_by('-id')[:10]
+
+    status_counts = Loan.objects.values('status').annotate(count=Count('status'))
+    status_data = {item['status']: item['count'] for item in status_counts}
 
     # ... (Keep existing Analytics/Segmentation logic here) ...
     # (Copied from your previous code for segmentation)
@@ -52,10 +57,13 @@ def dashboard(request):
     context = {
         'total_loans': total_loans,
         'active_defaults': active_defaults,
+        'active_loans_count': active_loans_count,
+        'total_disbursed': total_disbursed,
         'segment_data': json.dumps(segment_counts),
+        'status_data': json.dumps(status_data),
         'recent_loans': recent_loans,
         'query': query,
-        'search_match': search_match, # <--- PASS THIS NEW VARIABLE
+        'search_match': search_match,
     }
     return render(request, 'dashboard.html', context)
 
@@ -156,19 +164,46 @@ def loan_detail(request, loan_id):
     
     # Generate ML Explanation on the fly
     ml_features = {
+        'Age': loan.client.age,
         'Monthly_Income': loan.client.income,
         'Loan_Amount': loan.amount,
         'Loan_Tenure': loan.tenure,
+        'Interest_Rate': loan.interest_rate,
+        'Collateral_Value': loan.collateral_value,
+        'Outstanding_Loan_Amount': loan.outstanding_amount, 
+        'Monthly_EMI': loan.monthly_emi,
         'Num_Missed_Payments': loan.missed_payments,
-        'Collateral_Value': loan.collateral_value
+        'Days_Past_Due': loan.days_past_due
     }
     explanation = ml_system.explain_prediction(ml_features)
+
+    risk = loan.predicted_default_risk if loan.predicted_default_risk else 0
+    recommendation = ml_system.recommend_channel(risk, loan.days_past_due, outstanding_amount=loan.outstanding_amount)
+    logs = loan.logs.all().order_by('-interaction_date')
     
     context = {
         'loan': loan,
-        'explanation': explanation
+        'explanation': explanation,
+        'recommendation': recommendation,
+        'logs': logs
+
     }
     return render(request, 'loan_detail.html', context)
+
+@login_required
+def log_interaction(request, loan_id):
+    loan = get_object_or_404(Loan, pk=loan_id)
+    if request.method == 'POST':
+        channel = request.POST.get('channel')
+        notes = request.POST.get('notes')
+        
+        CollectionLog.objects.create(
+            loan=loan,
+            channel=channel,
+            officer_notes=notes
+        )
+        messages.success(request, "Interaction logged successfully.")
+    return redirect('loan_detail', loan_id=loan.id)
 
 def trigger_reminders(request):
     """
@@ -219,17 +254,43 @@ def add_payment(request, loan_id):
             payment.loan = loan
             payment.save()
             
-            # --- Business Logic: Update Loan Balance ---
+            # 1. Update Financials
             loan.outstanding_amount -= payment.amount
             
-            # Prevent negative balance
+            # 2. Check for Full Payment
             if loan.outstanding_amount <= 0:
                 loan.outstanding_amount = 0
                 loan.status = 'Paid'
-                messages.success(request, "Loan fully paid off!")
+                loan.predicted_default_risk = 0.0
+                loan.risk_explanation = "Loan fully paid."
+                messages.success(request, "Payment recorded. Loan is now fully PAID!")
             else:
-                messages.success(request, f"Payment of ${payment.amount} recorded.")
+                # 3. AI RE-EVALUATION
+                ml_features = {
+                    'Age': loan.client.age,
+                    'Monthly_Income': loan.client.income,
+                    'Loan_Amount': loan.amount,
+                    'Loan_Tenure': loan.tenure,
+                    'Interest_Rate': loan.interest_rate,
+                    'Collateral_Value': loan.collateral_value,
+                    # --- FIX: Use the NEW outstanding amount ---
+                    'Outstanding_Loan_Amount': loan.outstanding_amount, 
+                    # -------------------------------------------
+                    'Monthly_EMI': loan.monthly_emi,
+                    'Num_Missed_Payments': loan.missed_payments,
+                    'Days_Past_Due': loan.days_past_due
+                }
                 
+                # A. Get fresh prediction
+                new_risk, _ = ml_system.predict_risk(ml_features)
+                loan.predicted_default_risk = new_risk
+                
+                # B. --- NEW FIX: Generate & Save New Explanation ---
+                new_explanation_list = ml_system.explain_prediction(ml_features)
+                loan.risk_explanation = ", ".join(new_explanation_list)
+                
+                messages.success(request, f"Payment recorded. New Risk Score: {new_risk:.2f}")
+
             loan.save()
             return redirect('loan_detail', loan_id=loan.id)
     else:

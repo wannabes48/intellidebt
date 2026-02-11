@@ -4,92 +4,162 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card shadow mb-4">
-            <div class="card-header bg-primary text-white">
-                <h4>Loan Details: {{ loan.client.name }}</h4>
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="m-0 fw-bold text-primary">Loan #{{ loan.id }} - {{ loan.client.name }}</h5>
+                <span class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %} p-2">
+                    {{ loan.status }}
+                </span>
             </div>
             <div class="card-body">
                 <div class="row mb-3">
-                    <div class="col-md-6"><strong>Amount:</strong> KES {{ loan.amount|stringformat:".2f" }}</div>
-                    <div class="col-md-6"><strong>Status:</strong> 
-                        <span class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %}">
-                            {{ loan.status }}
-                        </span>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block text-uppercase">Outstanding</small>
+                        <h4 class="fw-bold">KES {{ loan.outstanding_amount|stringformat:".2f" }}</h4>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block text-uppercase">Due Date</small>
+                        <h5 class="fw-bold">{{ loan.due_date }}</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <small class="text-muted d-block text-uppercase">Interest Rate</small>
+                        <h5 class="fw-bold">{{ loan.interest_rate }}%</h5>
                     </div>
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Interest Rate:</strong> {{ loan.interest_rate }}%</div>
-                    <div class="col-md-6"><strong>Due Date:</strong> {{ loan.due_date }}</div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-6"><strong>Outstanding:</strong> KES {{ loan.outstanding_amount|stringformat:".2f" }}</div>
-                    <div class="col-md-6"><strong>Missed Payments:</strong> {{ loan.missed_payments }}</div>
-                </div>
+                
                 <hr>
-                <h5>Client Profile</h5>
-                <p><strong>Employment:</strong> {{ loan.client.employment_type }} | <strong>Income:</strong> KES {{ loan.client.income|stringformat:".2f" }}</p>
-                <p><strong>Contact:</strong> {{ loan.client.contact }}</p>
-                <div class="mt-4">
-                    {% if loan.status != 'Paid' %}
-                        <a href="{% url 'add_payment' loan.id %}" class="btn btn-success w-100">
-                            💰 Record Payment
+                
+                <h6 class="fw-bold text-dark mb-3">Contact Center</h6>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <a href="tel:{{ loan.client.contact }}" class="btn btn-outline-dark w-100" onclick="openLogModal('Call')">
+                            <i class="bi bi-telephone"></i> Call
                         </a>
-                    {% else %}
-                        <button class="btn btn-secondary w-100" disabled>Loan Fully Paid</button>
-                    {% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <a href="mailto:{{ loan.client.email|default:'client@email.com' }}" class="btn btn-outline-dark w-100" onclick="openLogModal('Email')">
+                            <i class="bi bi-envelope"></i> Email
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-dark w-100" onclick="openLogModal('SMS')">
+                            <i class="bi bi-chat-left-text"></i> SMS
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="#" class="btn btn-outline-warning w-100" onclick="openLogModal('Visit')">
+                            <i class="bi bi-geo-alt"></i> Visit
+                        </a>
+                    </div>
                 </div>
+
+                <div class="mt-4 d-flex gap-2">
+                    {% if loan.status != 'Paid' %}
+                        <a href="{% url 'add_payment' loan.id %}" class="btn btn-success flex-fill">
+                            <i class="bi bi-cash-coin"></i> Record Payment
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-secondary flex-fill">
+                        <i class="bi bi-file-earmark-text"></i> Generate Letter
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h6 class="m-0 fw-bold">Collection History</h6>
+            </div>
+            <div class="card-body">
+                {% for log in logs %}
+                    <div class="d-flex border-bottom pb-3 mb-3">
+                        <div class="me-3">
+                            <div class="bg-light rounded-circle p-2 text-primary">
+                                {% if log.channel == 'Call' %}<i class="bi bi-telephone"></i>
+                                {% elif log.channel == 'Visit' %}<i class="bi bi-geo-alt"></i>
+                                {% else %}<i class="bi bi-chat"></i>{% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="d-flex justify-content-between w-100">
+                                <h6 class="mb-1 fw-bold">{{ log.channel }}</h6>
+                                <small class="text-muted">{{ log.interaction_date|date:"M d, Y H:i" }}</small>
+                            </div>
+                            <p class="mb-0 small text-muted">{{ log.officer_notes }}</p>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted text-center py-3">No interactions logged yet.</p>
+                {% endfor %}
             </div>
         </div>
     </div>
 
     <div class="col-md-4">
-        <div class="card shadow border-info">
-            <div class="card-header bg-info text-white">
-                <h5 class="mb-0">🤖 AI Risk Analysis</h5>
+        <div class="card shadow border-{{ recommendation.color }} mb-4 ai-card">
+            <div class="card-header bg-{{ recommendation.color }} text-white">
+                <h5 class="mb-0"><i class="bi {{ recommendation.icon }} me-2"></i>AI Recommendation</h5>
             </div>
-            <div class="card-body">
-                <div class="mt-4 border-top pt-3">
-                    <h6><strong>Recommended Action:</strong></h6>
-                    {% if loan.predicted_default_risk > 0.5 %}
-                        <div class="alert alert-warning py-2">
-                            <small>⚠️ High/Medium Risk Detected.</small>
-                        </div>
-                        <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-outline-dark w-100">
-                            <i class="bi bi-file-earmark-text"></i> Generate Settlement Offer
-                        </a>
-                    {% else %}
-                        <div class="alert alert-success py-2">
-                            <small>✅ Low Risk. Standard collection.</small>
-                        </div>
-                    {% endif %}
-                </div>
-                <h6><strong>Predicted Risk Score:</strong> 
-                    {% if loan.predicted_default_risk %}
-                        {{ loan.predicted_default_risk|stringformat:".2f" }}
-                    {% else %}
-                        N/A
-                    {% endif %}
-                </h6>
+            <div class="card-body text-center">
+                <h6 class="text-muted text-uppercase small">Recommended Action</h6>
+                <h3 class="fw-bold text-{{ recommendation.color }} mb-1">{{ recommendation.method }}</h3>
+                <p class="small text-muted mb-3">{{ recommendation.action }}</p>
                 
-                <div class="progress mb-3">
-                    <div class="progress-bar bg-danger" role="progressbar" 
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-{{ recommendation.color }}" role="progressbar" 
                          style="width: {{ loan.predicted_default_risk|default:0|stringformat:'.2f'|slice:':2' }}0%">
                     </div>
                 </div>
-                
-                <h6><strong>Why this score?</strong> (Explainable AI)</h6>
-                <ul class="list-group list-group-flush">
-                    {% for reason in explanation %}
-                        <li class="list-group-item text-danger"><small>• {{ reason }}</small></li>
-                    {% empty %}
-                        <li class="list-group-item text-success"><small>• No specific risk factors detected.</small></li>
-                    {% endfor %}
-                </ul>
+                <small>Risk Score: {{ loan.predicted_default_risk|stringformat:".2f" }}</small>
             </div>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 fw-bold">Why this recommendation?</h6>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for reason in explanation %}
+                    <li class="list-group-item text-danger small"><i class="bi bi-caret-right-fill me-1"></i> {{ reason }}</li>
+                {% empty %}
+                    <li class="list-group-item text-success small">No high-risk factors detected.</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
 
-<div class="mt-3">
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+<div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Collection Activity</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'log_interaction' loan.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="channel" id="modalChannel">
+                    <p>Logging action: <strong id="modalActionDisplay"></strong></p>
+                    <div class="mb-3">
+                        <label class="form-label">Notes / Outcome</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="e.g. Client promised to pay by Friday..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Log</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
+
+<script>
+    function openLogModal(channel) {
+        document.getElementById('modalChannel').value = channel;
+        document.getElementById('modalActionDisplay').innerText = channel;
+        var myModal = new bootstrap.Modal(document.getElementById('logModal'));
+        myModal.show();
+    }
+</script>
 {% endblock %}

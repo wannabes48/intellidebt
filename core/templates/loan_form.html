@@ -2,71 +2,119 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white">
-                <h4>Create New Loan</h4>
-            </div>
-            <div class="card-body">
-                {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <strong>Please fix the following errors:</strong>
-                        <ul>
-                        {% for field in form %}
-                            {% for error in field.errors %}
-                                <li>{{ field.label }}: {{ error }}</li>
-                            {% endfor %}
-                        {% endfor %}
-                        {% for error in form.non_field_errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                        </ul>
-                    </div>
-                {% endif %}
+    <div class="col-lg-10">
+        <h4 class="mb-4 fw-bold text-dark">New Loan Application</h4>
 
+        <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="mb-0 fw-bold text-primary">Loan Details & Terms</h5>
+            </div>
+            
+            <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
-                    
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label fw-bold">Select Client</label>
-                            {{ form.client }}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Select Client <span class="text-danger">*</span></label>
+                        {{ form.client }}
+                        <div class="form-text text-muted">Choose the borrower from the registered client list.</div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Loan Amount (KES) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0">KES</span>
+                                {{ form.amount }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Interest Rate (%) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.interest_rate }}
+                                <span class="input-group-text bg-light text-muted border-start-0">%</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Loan Amount (KES)</label>
-                            {{ form.amount }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Interest Rate (%)</label>
-                            {{ form.interest_rate }}
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Tenure (Months)</label>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Tenure (Months) <span class="text-danger">*</span></label>
                             {{ form.tenure }}
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Collateral Value (KES)</label>
-                            {{ form.collateral_value }}
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Collateral Value (KES) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0">KES</span>
+                                {{ form.collateral_value }}
+                            </div>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Due Date</label>
+                        <label class="form-label fw-semibold">First Repayment Date <span class="text-danger">*</span></label>
                         {{ form.due_date }}
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100 py-2">
-                        Calculate Risk & Submit Application
-                    </button>
+                    <div class="alert alert-light border d-flex align-items-center mb-4" role="alert">
+                        <i class="bi bi-cpu-fill text-primary fs-4 me-3"></i>
+                        <div>
+                            <small class="text-muted d-block text-uppercase" style="font-size: 0.7rem;">AI Engine Ready</small>
+                            <span class="fw-bold text-dark">Risk Score & Strategy will be calculated automatically upon submission.</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-3 fw-bold" style="background-color: #4f46e5; border: none; font-size: 1rem; border-radius: 8px;">
+                            Calculate Risk & Submit Application
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'dashboard' %}" class="text-decoration-none text-muted small">Cancel application</a>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Consistent Fintech Styling */
+    .form-control, .form-select {
+        border-color: #e5e7eb;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        color: #1f2937;
+        font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    .form-label {
+        font-size: 0.9rem;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+    .input-group-text {
+        border-color: #e5e7eb;
+        background-color: #f9fafb;
+    }
+</style>
 {% endblock %}

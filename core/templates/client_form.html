@@ -2,22 +2,150 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-header bg-success text-white">
-                <h4>Register New Client</h4>
+    <div class="col-lg-10">
+        <h4 class="fw-bold">Client Registration</h4>
+
+        <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+                <h5 class="mb-0 fw-bold text-primary">Information of Client</h5>
             </div>
-            <div class="card-body">
-                <form method="post">
+            
+            <div class="card-body p-4">
+                <form method="post" class="needs-validation" id="clientForm">
                     {% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-success">Save Client</button>
-                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            {{ form.name }} 
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                            {{ form.age }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Mobile Number <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select class="form-select bg-light" style="max-width: 110px;" id="countryCodeSelect">
+                                    <option value="+254" selected>🇰🇪 +254</option>
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+256">🇺🇬 +256</option>
+                                    <option value="+255">🇹🇿 +255</option>
+                                    <option value="+250">🇷🇼 +250</option>
+                                    <option value="+27">🇿🇦 +27</option>
+                                    <option value="+234">🇳🇬 +234</option>
+                                </select>
+            
+                                <input type="text" name="contact" class="form-control" id="id_contact" required placeholder="712 345 678">
+                            </div>
+                            <small class="text-muted">Select country code and enter number (e.g., 712 345 678).</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Employment Type <span class="text-danger">*</span></label>
+                            {{ form.employment_type }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Address</label>
+                        {{ form.address }}
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Monthly Income (KES) <span class="text-danger">*</span></label>
+                            {{ form.income }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Verification Status</label>
+                            <input type="text" class="form-control" value="Pending Approval" disabled style="background-color: #f3f4f6; color: #6b7280;">
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-3 fw-bold shadow-sm" style="background-color: #4f46e5; border: none; font-size: 1rem; border-radius: 8px;">
+                            Submit Client Profile
+                        </button>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="{% url 'client_list' %}" class="text-decoration-none text-muted small">Cancel and go back</a>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .form-control, .form-select {
+        border-color: #e5e7eb;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        color: #1f2937;
+        font-size: 0.95rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+    .form-label {
+        font-size: 0.9rem;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+    .input-group-text {
+        border-color: #e5e7eb;
+    }
+</style>
+
+<script>
+    document.getElementById('clientForm').addEventListener('submit', function(e) {
+        // 1. Get Elements
+        const codeInput = document.getElementById('countryCodeSelect');
+        const numberInput = document.getElementById('id_contact');
+        
+        // 2. Get Values
+        const code = codeInput.value;
+        let number = numberInput.value.trim();
+        
+        // 3. Clean up the user input (remove leading zero or existing +)
+        if (number.startsWith('0')) {
+            number = number.substring(1);
+        }
+        // If user accidentally typed the code too (e.g. +254...), strip it to avoid duplication
+        if (number.startsWith(code)) {
+            number = number.substring(code.length);
+        } else if (number.startsWith('+')) {
+            // Remove any other plus sign to be safe
+             number = number.substring(1);
+        }
+        
+        // 4. Update the input value to the combined format (e.g., "+254712345678")
+        // This updated value is what gets sent to the server.
+        numberInput.value = code + number;
+    });
+</script>
 {% endblock %}

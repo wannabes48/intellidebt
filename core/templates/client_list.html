@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load humanize %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold">Client Directory</h2>
@@ -41,7 +41,7 @@
                     </div>
                     <div class="col-6 mb-2">
                         <small class="text-muted d-block text-uppercase" style="font-size:0.65rem;">Income</small>
-                        <span class="small fw-semibold">KES {{ client.income|stringformat:".0f" }}</span>
+                        <span class="small fw-semibold">KES {{ client.income|floatformat:0|intcomma }}</span>
                     </div>
                     <div class="col-12">
                         <small class="text-muted d-block text-uppercase" style="font-size:0.65rem;">Location</small>

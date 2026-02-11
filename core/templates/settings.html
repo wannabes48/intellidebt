@@ -2,36 +2,51 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-header bg-dark text-white">
-                <h4>System UI Settings</h4>
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg border-0 rounded-3">
+            <div class="card-header bg-gradient bg-dark text-white d-flex align-items-center">
+                <i class="bi bi-gear-fill me-2"></i>
+                <h4 class="mb-0">System UI Settings</h4>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
-                    
+
+                    <!-- Visual Theme -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Visual Theme</label>
-                        <select name="theme" class="form-select">
-                            <option value="light" {% if current_theme == 'light' %}selected{% endif %}>☀️ Light Mode</option>
-                            <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>🌙 Dark Mode</option>
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-palette me-1"></i> Visual Theme
+                        </label>
+                        <select name="theme" class="form-select shadow-sm">
+                            <option value="light" {% if current_theme == 'light' %}selected{% endif %}>Light Mode</option>
+                            <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>Dark Mode</option>
                         </select>
-                        <div class="form-text">Changes the background color of the sidebar and main area.</div>
+                        <div class="form-text text-muted">
+                            Choose how the sidebar and main area look.
+                        </div>
                     </div>
 
+                    <!-- Rows Per Page -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">Rows Per Page</label>
-                        <select name="items_per_page" class="form-select">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-list-ol me-1"></i> Rows Per Page
+                        </label>
+                        <select name="items_per_page" class="form-select shadow-sm">
                             <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 rows</option>
                             <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 rows</option>
                             <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 rows</option>
                         </select>
-                        <div class="form-text">Controls how many loans appear in lists.</div>
+                        <div class="form-text text-muted">
+                            Controls how many loans appear in lists.
+                        </div>
                     </div>
 
-                    <hr>
-                    <button type="submit" class="btn btn-success w-100">Save Preferences</button>
+                    <hr class="my-4">
+
+                    <!-- Save Button -->
+                    <button type="submit" class="btn btn-success w-100 shadow-sm">
+                        <i class="bi bi-check-circle me-1"></i> Save Preferences
+                    </button>
                 </form>
             </div>
         </div>

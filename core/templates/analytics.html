@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Loan Analytics & Segmentation</h2>
+        <h2 class="fw-bold">Loan Analytics & Segmentation</h2>
         <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
     </div>
 
@@ -64,6 +64,9 @@
     // Load data passed from Django View
     const rawData = JSON.parse('{{ analytics_data|safe|escapejs }}');
 
+    // Helper: format numbers with commas
+    function fmt(n){ return Number(n).toLocaleString(); }
+
     // --- Chart 1: Income vs Loan Amount (Scatter) ---
     const income = rawData.map(d => d.Monthly_Income);
     const loanAmt = rawData.map(d => d.Loan_Amount);
@@ -74,12 +77,12 @@
         mode: 'markers',
         type: 'scatter',
         marker: { size: 8, color: loanAmt, colorscale: 'Viridis', showscale: true },
-        text: rawData.map(d => `Income: $${d.Monthly_Income}<br>Loan: $${d.Loan_Amount}`)
+        text: rawData.map(d => `Income: KES${fmt(d.Monthly_Income)}<br>Loan: KES${fmt(d.Loan_Amount)}`)
     };
     
     const layout1 = {
-        xaxis: { title: 'Monthly Income ($)' },
-        yaxis: { title: 'Loan Amount ($)' },
+        xaxis: { title: 'Monthly Income (KES)' },
+        yaxis: { title: 'Loan Amount (KES)' },
         margin: { t: 20 }
     };
     Plotly.newPlot('incomeLoanChart', [trace1], layout1);
@@ -133,8 +136,8 @@
     });
     
     const layout4 = {
-        xaxis: { title: 'Monthly Income ($)' },
-        yaxis: { title: 'Loan Amount ($)' },
+        xaxis: { title: 'Monthly Income (KES)' },
+        yaxis: { title: 'Loan Amount (KES)' },
         legend: { x: 0, y: 1 },
         margin: { t: 20 }
     };

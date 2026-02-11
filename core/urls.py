@@ -14,4 +14,5 @@ urlpatterns = [
     path('loan/<int:loan_id>/settlement/', views.generate_settlement, name='generate_settlement'),
     path('clients/', views.client_list, name='client_list'), # New
     path('client/<int:client_id>/delete/', views.delete_client, name='delete_client'),
+    path('loan/<int:loan_id>/log/', views.log_interaction, name='log_interaction'),
 ]

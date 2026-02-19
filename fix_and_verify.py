@@ -1,4 +1,32 @@
-{% extends 'base.html' %}
+
+import os
+import time
+import django
+from django.conf import settings
+from django.template.loader import render_to_string
+
+# Setup Django (minimal)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'intellidebt.settings')
+django.setup()
+
+def fix_and_verify():
+    file_path = os.path.abspath('core/templates/loan_list.html')
+    print(f"Target file: {file_path}")
+
+    # 1. FORCE DELETE
+    if os.path.exists(file_path):
+        print("File exists. Attempting to delete...")
+        try:
+            os.remove(file_path)
+            print("File deleted successfully.")
+        except Exception as e:
+            print(f"ERROR: Could not delete file: {e}")
+            return
+    else:
+        print("File does not exist (clean start).")
+
+    # 2. WRITE CORRECT CONTENT
+    correct_content = r"""{% extends 'base.html' %}
 {# FIX APPLIED VIA SCRIPT #}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -75,9 +103,34 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge bg-{{ loan.risk_badge_color }}">
-                                {{ loan.risk_score_display }}% - {{ loan.risk_label }}
-                            </span>
+                            {% if loan.predicted_default_risk %}
+                            {% if loan.predicted_default_risk > 0.75 %}
+                            <div class="progress" style="height: 6px; width: 80px;">
+                                <div class="progress-bar bg-danger"
+                                    style="width: {{ loan.predicted_default_risk|stringformat:'.2f'|slice:'2:' }}%">
+                                </div>
+                            </div>
+                            <small class="text-danger fw-bold">{{ loan.predicted_default_risk|stringformat:".2f"
+                                }}</small>
+                            {% elif loan.predicted_default_risk >= 0.50 %}
+                            <div class="progress" style="height: 6px; width: 80px;">
+                                <div class="progress-bar bg-warning"
+                                    style="width: {{ loan.predicted_default_risk|stringformat:'.2f'|slice:'2:' }}%">
+                                </div>
+                            </div>
+                            <small class="text-warning fw-bold">{{ loan.predicted_default_risk|stringformat:".2f"
+                                }}</small>
+                            {% else %}
+                            <div class="progress" style="height: 6px; width: 80px;">
+                                <div class="progress-bar bg-success"
+                                    style="width: {{ loan.predicted_default_risk|stringformat:'.2f'|slice:'2:' }}%">
+                                </div>
+                            </div>
+                            <small class="text-success">{{ loan.predicted_default_risk|stringformat:".2f" }}</small>
+                            {% endif %}
+                            {% else %}
+                            -
+                            {% endif %}
                         </td>
                         <td>
                             <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">View</a>
@@ -90,37 +143,6 @@
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="d-flex justify-content-between align-items-center mt-4">
-    <span class="text-muted">
-        Showing page {{ loans.number }} of {{ loans.paginator.num_pages }}
-    </span>
-    
-    <nav aria-label="Page navigation">
-        <ul class="pagination mb-0">
-            {% if loans.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1">&laquo; First</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ loans.previous_page_number }}">Previous</a>
-                </li>
-            {% endif %}
-
-            <li class="page-item active">
-                <span class="page-link">{{ loans.number }}</span>
-            </li>
-
-            {% if loans.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ loans.next_page_number }}">Next</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ loans.paginator.num_pages }}">Last &raquo;</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
         </div>
     </div>
 
@@ -143,4 +165,38 @@
         </nav>
     </div>
 </div>
-{% endblock %}
+{% endblock %}"""
+
+    print("Writing new content...")
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(correct_content)
+        print("Write successful.")
+    except Exception as e:
+         print(f"ERROR: Could not write file: {e}")
+         return
+
+    # 3. VERIFY CONTENT ON DISK
+    print("Verifying content on disk...")
+    with open(file_path, 'r', encoding='utf-8') as f:
+        read_content = f.read()
+        if "{# FIX APPLIED VIA SCRIPT #}" in read_content:
+            print("  [OK] New comment found.")
+        else:
+            print("  [FAIL] New comment NOT found.")
+        
+        if "status_filter == 'Active'" in read_content:
+            print("  [OK] Correct syntax found (spaces present).")
+        else:
+            print("  [FAIL] Incorrect syntax found (no spaces?).")
+            print("snippet:", read_content[600:800]) # approximate location
+
+    # 4. RUN VERIFY_LOAN_LIST from here (logic wise)
+    print("Attempting to run verification logic...")
+    # call verification script or just run logic here?
+    # Running verify_loan_list.py is easier
+    exit_code = os.system('python verify_loan_list.py')
+    print(f"verify_loan_list.py exit code: {exit_code}")
+
+if __name__ == "__main__":
+    fix_and_verify()

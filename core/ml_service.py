@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from django.conf import settings
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
@@ -19,7 +20,8 @@ class LoanMLSystem:
         self.train_models()
 
     def train_models(self):
-        csv_path = 'synthetic_loans_1000.csv'
+        # Safely locate the CSV file in the main project folder
+        csv_path = os.path.join(settings.BASE_DIR, 'synthetic_loans_1000.csv')
         
         if os.path.exists(csv_path):
             # --- 1. Load Real Data ---
@@ -32,7 +34,6 @@ class LoanMLSystem:
             X_scaled = self.scaler.fit_transform(X)
 
             # --- 3. Clustering (Objective B) ---
-            # The article uses K-Means with k=4
             # RESTRICTION: Use only Monthly_Income and Loan_Amount for segmentation
             X_clustering = self.df_data[['Monthly_Income', 'Loan_Amount']]
             scaler_cluster = StandardScaler()
@@ -45,7 +46,6 @@ class LoanMLSystem:
             self.cluster_scaler = scaler_cluster
             
             # Map Clusters to Names (Heuristic based on article)
-            # We map 0,1,2,3 based on generic risk assumptions for this dataset
             self.segment_map = {
                 0: 'Moderate Income, High Loan Burden',
                 1: 'High Income, Low Default Risk',
@@ -55,7 +55,6 @@ class LoanMLSystem:
             self.df_data['Segment_Name'] = self.df_data['Borrower_Segment'].map(self.segment_map)
 
             # --- 4. Define Target for Classification (Objective A) ---
-            # Article Logic: Mark specific segments as "High Risk" (1) and others as (0)
             high_risk_segments = ['High Loan, Higher Default Risk', 'Moderate Income, High Loan Burden']
             self.df_data['High_Risk_Flag'] = self.df_data['Segment_Name'].apply(
                 lambda x: 1 if x in high_risk_segments else 0
@@ -65,20 +64,17 @@ class LoanMLSystem:
             y = self.df_data['High_Risk_Flag']
             self.classifier = RandomForestClassifier(n_estimators=100, random_state=42)
             self.classifier.fit(X, y)
+            print("✅ ML Models successfully trained on 1,000 synthetic loans!")
             
         else:
-            print("WARNING: CSV file not found. ML System is inactive.")
-            # Fallback to simple synthetic data if file is missing (prevents crash)
+            print(f"WARNING: CSV file not found at {csv_path}. ML System is inactive.")
             self.train_mock_fallback()
 
     def predict_risk(self, features_dict):
-        """
-        Calculates the Default Probability (Risk Score).
-        """
+        """Calculates the Default Probability (Risk Score)."""
         if not self.classifier:
             return 0.5, "System Not Ready"
 
-        # Convert input dict to DataFrame
         df_input = pd.DataFrame([features_dict])
         
         # Ensure all columns exist
@@ -86,8 +82,7 @@ class LoanMLSystem:
             if col not in df_input.columns:
                 df_input[col] = 0 
                 
-        # PREDICT PROBABILITY (This is the Risk Score)
-        # Returns [prob_0, prob_1]. We want prob_1 (Probability of High Risk)
+        # PREDICT PROBABILITY (Risk Score)
         risk_score = self.classifier.predict_proba(df_input[self.features_list])[:, 1][0]
         
         # Strategy Logic
@@ -115,19 +110,16 @@ class LoanMLSystem:
 
     def get_client_segments(self, client_data_list):
         """Takes real dashboard data and predicts segments."""
-        if not client_data_list or not self.kmeans:
-            return []
+        if not client_data_list or not hasattr(self, 'kmeans') or self.kmeans is None:
+            return ["Unknown"] * len(client_data_list)
         
         input_df = pd.DataFrame(client_data_list)
-        # Fill missing cols with 0 to match shape
         for col in self.features_list:
             if col not in input_df.columns:
                 input_df[col] = 0
                 
-        # Scale and Predict using the specific clustering features and scaler
         clustering_features = ['Monthly_Income', 'Loan_Amount']
         if not hasattr(self, 'cluster_scaler'):
-             # Fallback if not trained properly (shouldn't happen in prod if file exists)
              return ["Unknown"] * len(client_data_list)
              
         X_input = self.cluster_scaler.transform(input_df[clustering_features])
@@ -138,12 +130,10 @@ class LoanMLSystem:
         return self.df_data.to_json(orient='records')
 
     def train_mock_fallback(self):
-        # ... (simplified fallback if needed) ...
         pass
 
     def recommend_channel(self, risk_score, days_past_due, outstanding_amount=None):
-
-        # 1. Check for Paid Status
+        """Determines the most effective collection channel based on risk."""
         if outstanding_amount is not None and outstanding_amount <= 0:
             return {
                 'method': 'Loan Closed',
@@ -151,29 +141,28 @@ class LoanMLSystem:
                 'color': 'success',
                 'action': 'No further action required. Good job!'
             }
-        """
-        Determines the most effective collection channel based on risk.
-        """
+            
         if risk_score > 0.75:
             return {
                 'method': 'Immediate Legal Action',
                 'icon': 'bi-hammer',
-                'color': 'danger', # Red
-                'action': 'Immediate legal notices & aggressive recovery attempts'
+                'color': 'danger', 
+                'action': 'Prepare Legal Notice'
             }
         elif 0.50 <= risk_score <= 0.75:
             return {
                 'method': 'Settlement Offers',
                 'icon': 'bi-hand-thumbs-up-fill',
-                'color': 'warning', # Orange
-                'action': 'Settlement offers & repayment plans'
+                'color': 'warning', 
+                'action': 'Propose Repayment Plan'
             }
-        else: # < 0.50
+        else:
             return {
                 'method': 'Automated Reminders',
                 'icon': 'bi-chat-dots-fill',
-                'color': 'success', # Green
-                'action': 'Automated reminders & monitoring'
+                'color': 'success', 
+                'action': 'Send Standard Reminder'
             }
 
+# Instantiate the system once so it trains immediately when the app starts
 ml_system = LoanMLSystem()

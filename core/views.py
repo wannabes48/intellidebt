@@ -1,7 +1,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from .models import Loan, Client, Reminder, CollectionLog, Payment
 from .forms import LoanForm, ClientForm, PaymentForm# You assume a ModelForm exists
+from .ml_utils import ml_system
+from django.db.models import Sum, Q, Count
+from datetime import date
 from .ml_utils import ml_system
 from django.db.models import Sum, Q, Count
 from datetime import date
@@ -17,7 +21,10 @@ from django.core.paginator import Paginator # For pagination
 def dashboard(request):
     # 1. Standard Stats
     total_loans = Loan.objects.count()
-    active_defaults = Loan.objects.filter(status='Defaulted').count()
+    active_defaults = Loan.objects.filter(
+        Q(status='Defaulted') | 
+        Q(status='Active', days_past_due__gt=0)
+    ).count()
     active_loans_count = Loan.objects.filter(status='Active').count()
     total_disbursed = Loan.objects.aggregate(Sum('amount'))['amount__sum'] or 0
     
@@ -42,7 +49,7 @@ def dashboard(request):
 
     # ... (Keep existing Analytics/Segmentation logic here) ...
     # (Copied from your previous code for segmentation)
-    ml_input_data = [{'Age': l.client.age, 'Monthly_Income': l.client.income, 'Loan_Amount': l.amount, 'Loan_Tenure': l.tenure, 'Interest_Rate': l.interest_rate, 'Collateral_Value': l.collateral_value, 'Outstanding_Loan_Amount': l.amount, 'Monthly_EMI': l.monthly_emi, 'Num_Missed_Payments': l.missed_payments, 'Days_Past_Due': l.days_past_due} for l in Loan.objects.filter(status__in=['Active', 'Defaulted'])]
+    ml_input_data = [{'Age': l.client.age, 'Monthly_Income': l.client.monthly_income, 'Loan_Amount': l.amount, 'Loan_Tenure': l.tenure, 'Interest_Rate': l.interest_rate, 'Collateral_Value': l.collateral_value, 'Outstanding_Loan_Amount': l.amount, 'Monthly_EMI': l.monthly_emi, 'Num_Missed_Payments': l.missed_payments, 'Days_Past_Due': l.days_past_due} for l in Loan.objects.filter(status__in=['Active', 'Defaulted']).select_related('client')]
     segments = ml_system.get_client_segments(ml_input_data)
     segment_counts = {k: v for k, v in {
         "Steady Repayer": segments.count("Steady Repayer"),
@@ -116,26 +123,7 @@ def create_loan(request):
         form = LoanForm()
     return render(request, 'loan_form.html', {'form': form})
 
-def trigger_reminders(request):
-    """
-    Simulates a background cron job. 
-    Checks for overdue payments and creates reminders.
-    """
-    overdue_loans = Loan.objects.filter(
-        status='Active', 
-        due_date__lt=date.today()
-    )
-    
-    count = 0
-    for loan in overdue_loans:
-        Reminder.objects.create(
-            loan=loan,
-            message=f"Dear {loan.client.name}, your loan of {loan.amount} is overdue.",
-            method="SMS"
-        )
-        count += 1
-        
-    return render(request, 'reminder_success.html', {'count': count})
+
 
 @login_required
 def analytics_view(request):
@@ -160,33 +148,47 @@ def create_client(request):
 
 @login_required
 def loan_detail(request, loan_id):
+    # FIX 1: Use pk=loan_id to search by the database ID instead of the string LN_ID
     loan = get_object_or_404(Loan, pk=loan_id)
+    client = loan.client
     
     # Generate ML Explanation on the fly
     ml_features = {
         'Age': loan.client.age,
-        'Monthly_Income': loan.client.income,
-        'Loan_Amount': loan.amount,
+        'Monthly_Income': float(loan.client.monthly_income),
+        'Loan_Amount': float(loan.amount),
         'Loan_Tenure': loan.tenure,
-        'Interest_Rate': loan.interest_rate,
-        'Collateral_Value': loan.collateral_value,
-        'Outstanding_Loan_Amount': loan.outstanding_amount, 
-        'Monthly_EMI': loan.monthly_emi,
+        'Interest_Rate': float(loan.interest_rate),
+        'Collateral_Value': float(loan.collateral_value),
+        'Outstanding_Loan_Amount': float(loan.outstanding_amount), 
+        'Monthly_EMI': float(loan.monthly_emi),
         'Num_Missed_Payments': loan.missed_payments,
         'Days_Past_Due': loan.days_past_due
     }
-    explanation = ml_system.explain_prediction(ml_features)
 
-    risk = loan.predicted_default_risk if loan.predicted_default_risk else 0
-    recommendation = ml_system.recommend_channel(risk, loan.days_past_due, outstanding_amount=loan.outstanding_amount)
-    logs = loan.logs.all().order_by('-interaction_date')
+    risk_score, strategy = ml_system.predict_risk(ml_features)
+    explanation = ml_system.explain_prediction(ml_features)
+    
+    # FIX 2: Replaced the undefined variable "risk" with "risk_score"
+    if loan.predicted_default_risk != risk_score:
+         loan.predicted_default_risk = risk_score
+         loan.risk_explanation = ", ".join(explanation)
+         loan.save() # Safe save
+         
+    recommendation = ml_system.recommend_channel(risk_score, loan.days_past_due, outstanding_amount=loan.outstanding_amount)
+    
+    # Safely get logs just in case the related_name differs
+    try:
+        logs = loan.collection_logs.all().order_by('-attempt_date')
+    except AttributeError:
+        logs = loan.collectionlog_set.all().order_by('-attempt_date')
     
     context = {
         'loan': loan,
+        'risk_score_display': round(risk_score, 2),
         'explanation': explanation,
         'recommendation': recommendation,
         'logs': logs
-
     }
     return render(request, 'loan_detail.html', context)
 
@@ -199,8 +201,8 @@ def log_interaction(request, loan_id):
         
         CollectionLog.objects.create(
             loan=loan,
-            channel=channel,
-            officer_notes=notes
+            method=channel,
+            notes=notes
         )
         messages.success(request, "Interaction logged successfully.")
     return redirect('loan_detail', loan_id=loan.id)
@@ -215,7 +217,7 @@ def trigger_reminders(request):
     # 1. Find overdue loans (Active status AND due date is before today)
     overdue_loans = Loan.objects.filter(
         status='Active', 
-        due_date__lt=date.today()
+        days_past_due__gt=0
     )
     
     count = 0
@@ -223,7 +225,7 @@ def trigger_reminders(request):
         # 2. Simulate the Email/SMS Logic
         message = (
             f"URGENT: Dear {loan.client.name}, your loan payment of "
-            f"${loan.outstanding_amount} was due on {loan.due_date}. "
+            f"${loan.outstanding_amount} is overdue by {loan.days_past_due} days. "
             f"Please pay immediately."
         )
         
@@ -340,7 +342,7 @@ def generate_settlement(request, loan_id):
 @login_required
 def loan_list(request):
     # 1. Start with all loans
-    loans = Loan.objects.select_related('client').order_by('-id')
+    loans = Loan.objects.select_related('client').all()
     
     # 2. SEARCH LOGIC (Name or ID)
     query = request.GET.get('q')
@@ -354,22 +356,55 @@ def loan_list(request):
     status_filter = request.GET.get('status')
     if status_filter:
         loans = loans.filter(status=status_filter)
-        
+
     risk_filter = request.GET.get('risk')
     if risk_filter == 'high':
+        # Safely filter assuming the field exists
         loans = loans.filter(predicted_default_risk__gt=0.5)
     elif risk_filter == 'low':
         loans = loans.filter(predicted_default_risk__lte=0.5)
 
-    # 4. Pagination
-    per_page = request.session.get('ui_items_per_page', 10)
+    # 4. ONE SINGLE PAGINATION BLOCK (Removed the duplicate that erased your scores)
+    per_page = request.session.get('ui_items_per_page', 20)
     paginator = Paginator(loans, per_page) 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
+    # 5. Calculate scores for the final page block
+    for loan in page_obj:
+        features = {
+            'Age': loan.client.age,
+            'Monthly_Income': float(loan.client.monthly_income),
+            'Loan_Amount': float(loan.amount),
+            'Loan_Tenure': loan.tenure,
+            'Interest_Rate': float(loan.interest_rate),
+            'Collateral_Value': float(loan.collateral_value),
+            'Outstanding_Loan_Amount': float(loan.outstanding_amount),
+            'Monthly_EMI': float(loan.monthly_emi),
+            'Num_Missed_Payments': loan.missed_payments,
+            'Days_Past_Due': loan.days_past_due
+        }
+        
+        # Get prediction
+        risk_score, strategy = ml_system.predict_risk(features)
+        
+        # Attach the score and colors directly to the loan object
+        loan.risk_score_display = round(risk_score, 2) 
+        
+        if risk_score > 0.75:
+            loan.risk_badge_color = "danger"   # Red
+            loan.risk_label = "High Risk"
+        elif risk_score >= 0.50:
+            loan.risk_badge_color = "warning"  # Yellow/Orange
+            loan.risk_label = "Medium Risk"
+        else:
+            loan.risk_badge_color = "success"  # Green
+            loan.risk_label = "Low Risk"
+            
     context = {
+        'loans': page_obj, 
         'page_obj': page_obj,
-        'query': query, # Pass back to template
+        'query': query,
         'status_filter': status_filter,
         'risk_filter': risk_filter
     }

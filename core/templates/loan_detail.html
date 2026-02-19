@@ -6,7 +6,8 @@
         <div class="card shadow mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h5 class="m-0 fw-bold text-primary">Loan #{{ loan.id }} - {{ loan.client.name }}</h5>
-                <span class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %} p-2">
+                <span
+                    class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %} p-2">
                     {{ loan.status }}
                 </span>
             </div>
@@ -17,26 +18,28 @@
                         <h4 class="fw-bold">KES {{ loan.outstanding_amount|stringformat:".2f" }}</h4>
                     </div>
                     <div class="col-md-4">
-                        <small class="text-muted d-block text-uppercase">Due Date</small>
-                        <h5 class="fw-bold">{{ loan.due_date }}</h5>
+                        <small class="text-muted d-block text-uppercase">Days Overdue</small>
+                        <h5 class="fw-bold">{{ loan.days_past_due }}</h5>
                     </div>
                     <div class="col-md-4">
                         <small class="text-muted d-block text-uppercase">Interest Rate</small>
                         <h5 class="fw-bold">{{ loan.interest_rate }}%</h5>
                     </div>
                 </div>
-                
+
                 <hr>
-                
+
                 <h6 class="fw-bold text-dark mb-3">Contact Center</h6>
                 <div class="row g-2">
                     <div class="col-md-3">
-                        <a href="tel:{{ loan.client.contact }}" class="btn btn-outline-dark w-100" onclick="openLogModal('Call')">
+                        <a href="tel:{{ loan.client.contact }}" class="btn btn-outline-dark w-100"
+                            onclick="openLogModal('Call')">
                             <i class="bi bi-telephone"></i> Call
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="mailto:{{ loan.client.email|default:'client@email.com' }}" class="btn btn-outline-dark w-100" onclick="openLogModal('Email')">
+                        <a href="mailto:{{ loan.client.email|default:'client@email.com' }}"
+                            class="btn btn-outline-dark w-100" onclick="openLogModal('Email')">
                             <i class="bi bi-envelope"></i> Email
                         </a>
                     </div>
@@ -54,9 +57,9 @@
 
                 <div class="mt-4 d-flex gap-2">
                     {% if loan.status != 'Paid' %}
-                        <a href="{% url 'add_payment' loan.id %}" class="btn btn-success flex-fill">
-                            <i class="bi bi-cash-coin"></i> Record Payment
-                        </a>
+                    <a href="{% url 'add_payment' loan.id %}" class="btn btn-success flex-fill">
+                        <i class="bi bi-cash-coin"></i> Record Payment
+                    </a>
                     {% endif %}
                     <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-secondary flex-fill">
                         <i class="bi bi-file-earmark-text"></i> Generate Letter
@@ -71,24 +74,24 @@
             </div>
             <div class="card-body">
                 {% for log in logs %}
-                    <div class="d-flex border-bottom pb-3 mb-3">
-                        <div class="me-3">
-                            <div class="bg-light rounded-circle p-2 text-primary">
-                                {% if log.channel == 'Call' %}<i class="bi bi-telephone"></i>
-                                {% elif log.channel == 'Visit' %}<i class="bi bi-geo-alt"></i>
-                                {% else %}<i class="bi bi-chat"></i>{% endif %}
-                            </div>
-                        </div>
-                        <div>
-                            <div class="d-flex justify-content-between w-100">
-                                <h6 class="mb-1 fw-bold">{{ log.channel }}</h6>
-                                <small class="text-muted">{{ log.interaction_date|date:"M d, Y H:i" }}</small>
-                            </div>
-                            <p class="mb-0 small text-muted">{{ log.officer_notes }}</p>
+                <div class="d-flex border-bottom pb-3 mb-3">
+                    <div class="me-3">
+                        <div class="bg-light rounded-circle p-2 text-primary">
+                            {% if log.method == 'Call' %}<i class="bi bi-telephone"></i>
+                            {% elif log.method == 'Visit' %}<i class="bi bi-geo-alt"></i>
+                            {% else %}<i class="bi bi-chat"></i>{% endif %}
                         </div>
                     </div>
+                    <div>
+                        <div class="d-flex justify-content-between w-100">
+                            <h6 class="mb-1 fw-bold">{{ log.method }}</h6>
+                            <small class="text-muted">{{ log.attempt_date|date:"M d, Y H:i" }}</small>
+                        </div>
+                        <p class="mb-0 small text-muted">{{ log.notes }}</p>
+                    </div>
+                </div>
                 {% empty %}
-                    <p class="text-muted text-center py-3">No interactions logged yet.</p>
+                <p class="text-muted text-center py-3">No interactions logged yet.</p>
                 {% endfor %}
             </div>
         </div>
@@ -103,13 +106,13 @@
                 <h6 class="text-muted text-uppercase small">Recommended Action</h6>
                 <h3 class="fw-bold text-{{ recommendation.color }} mb-1">{{ recommendation.method }}</h3>
                 <p class="small text-muted mb-3">{{ recommendation.action }}</p>
-                
+
                 <div class="progress mb-3" style="height: 10px;">
-                    <div class="progress-bar bg-{{ recommendation.color }}" role="progressbar" 
-                         style="width: {{ loan.predicted_default_risk|default:0|stringformat:'.2f'|slice:':2' }}0%">
+                    <div class="progress-bar bg-{{ recommendation.color }}" role="progressbar"
+                        style="width: {{ risk_score_display }}%">
                     </div>
                 </div>
-                <small>Risk Score: {{ loan.predicted_default_risk|stringformat:".2f" }}</small>
+                <small>Risk Score: {{ loan.risk_score_display|stringformat:".2f" }}</small>
             </div>
         </div>
 
@@ -119,9 +122,10 @@
             </div>
             <ul class="list-group list-group-flush">
                 {% for reason in explanation %}
-                    <li class="list-group-item text-danger small"><i class="bi bi-caret-right-fill me-1"></i> {{ reason }}</li>
+                <li class="list-group-item text-danger small"><i class="bi bi-caret-right-fill me-1"></i> {{ reason }}
+                </li>
                 {% empty %}
-                    <li class="list-group-item text-success small">No high-risk factors detected.</li>
+                <li class="list-group-item text-success small">No high-risk factors detected.</li>
                 {% endfor %}
             </ul>
         </div>
@@ -142,7 +146,8 @@
                     <p>Logging action: <strong id="modalActionDisplay"></strong></p>
                     <div class="mb-3">
                         <label class="form-label">Notes / Outcome</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="e.g. Client promised to pay by Friday..." required></textarea>
+                        <textarea name="notes" class="form-control" rows="3"
+                            placeholder="e.g. Client promised to pay by Friday..." required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

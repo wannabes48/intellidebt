@@ -3,13 +3,10 @@ from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from .models import Loan, Client, Reminder, CollectionLog, Payment
 from .forms import LoanForm, ClientForm, PaymentForm# You assume a ModelForm exists
-from .ml_utils import ml_system
 from django.db.models import Sum, Q, Count
 from datetime import date
 from .ml_utils import ml_system
-from django.db.models import Sum, Q, Count
 from datetime import date
-from .ml_utils import ml_system
 import json
 from django.contrib import messages
 from django.core.paginator import Paginator # For pagination
@@ -342,7 +339,7 @@ def generate_settlement(request, loan_id):
 @login_required
 def loan_list(request):
     # 1. Start with all loans
-    loans = Loan.objects.select_related('client').all()
+    loans = Loan.objects.select_related('client').all().order_by('-id') # Newest first
     
     # 2. SEARCH LOGIC (Name or ID)
     query = request.GET.get('q')

@@ -8,140 +8,54 @@
     </div>
 
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <strong>Income vs. Loan Amount</strong>
                     <br><small class="text-muted">Higher income usually correlates with higher loans</small>
                 </div>
                 <div class="card-body">
-                    <div id="incomeLoanChart"></div>
+                    {{ loan_income_chart|safe }}
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <strong>Payment History Impact</strong>
                     <br><small class="text-muted">Effect of history on recovery status</small>
                 </div>
                 <div class="card-body">
-                    <div id="historyChart"></div>
+                    {{ payment_history_chart|safe }}
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-12 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-white">
                     <strong>Missed Payments Analysis</strong>
                     <br><small class="text-muted">Box plot of missed payments by recovery status</small>
                 </div>
                 <div class="card-body">
-                    <div id="missedPayChart"></div>
+                    {{ missed_payments_chart|safe }}
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
+        <div class="col-md-12 mb-4">
+            <div class="card shadow-sm border-0">
                 <div class="card-header bg-white">
                     <strong>Borrower Segmentation (K-Means)</strong>
                     <br><small class="text-muted">Clusters based on Risk & Financial Behavior</small>
                 </div>
                 <div class="card-body">
-                    <div id="segmentChart"></div>
+                    {{ kmeans_chart|safe }}
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-<script>
-    // Load data passed from Django View
-    const rawData = JSON.parse('{{ analytics_data|safe|escapejs }}');
-
-    // Helper: format numbers with commas
-    function fmt(n){ return Number(n).toLocaleString(); }
-
-    // --- Chart 1: Income vs Loan Amount (Scatter) ---
-    const income = rawData.map(d => d.Monthly_Income);
-    const loanAmt = rawData.map(d => d.Loan_Amount);
-    
-    const trace1 = {
-        x: income,
-        y: loanAmt,
-        mode: 'markers',
-        type: 'scatter',
-        marker: { size: 8, color: loanAmt, colorscale: 'Viridis', showscale: true },
-        text: rawData.map(d => `Income: KES${fmt(d.Monthly_Income)}<br>Loan: KES${fmt(d.Loan_Amount)}`)
-    };
-    
-    const layout1 = {
-        xaxis: { title: 'Monthly Income (KES)' },
-        yaxis: { title: 'Loan Amount (KES)' },
-        margin: { t: 20 }
-    };
-    Plotly.newPlot('incomeLoanChart', [trace1], layout1);
-
-    // --- Chart 2: Payment History vs Recovery (Histogram) ---
-    // We group data simply for the bar chart effect
-    const trace2 = {
-        x: rawData.map(d => d.Payment_History),
-        type: 'histogram',
-        marker: { color: '#636efa' }
-    };
-    
-    const layout2 = {
-        xaxis: { title: 'Payment History' },
-        yaxis: { title: 'Count' },
-        margin: { t: 20 }
-    };
-    Plotly.newPlot('historyChart', [trace2], layout2);
-
-    // --- Chart 3: Missed Payments vs Recovery (Box Plot) ---
-    const trace3 = {
-        y: rawData.map(d => d.Num_Missed_Payments),
-        x: rawData.map(d => d.Recovery_Status),
-        type: 'box',
-        boxpoints: 'all',
-        jitter: 0.3,
-        pointpos: -1.8,
-        marker: { color: '#ef553b' }
-    };
-    
-    const layout3 = {
-        xaxis: { title: 'Recovery Status' },
-        yaxis: { title: 'Num Missed Payments' },
-        margin: { t: 20 }
-    };
-    Plotly.newPlot('missedPayChart', [trace3], layout3);
-
-    // --- Chart 4: Segments (Scatter with Color Categories) ---
-    // Group points by Segment Name
-    const segments = [...new Set(rawData.map(d => d.Segment_Name))];
-    const traces4 = segments.map(seg => {
-        const filtered = rawData.filter(d => d.Segment_Name === seg);
-        return {
-            x: filtered.map(d => d.Monthly_Income),
-            y: filtered.map(d => d.Loan_Amount),
-            mode: 'markers',
-            type: 'scatter',
-            name: seg,
-            marker: { size: 10 }
-        };
-    });
-    
-    const layout4 = {
-        xaxis: { title: 'Monthly Income (KES)' },
-        yaxis: { title: 'Loan Amount (KES)' },
-        legend: { x: 0, y: 1 },
-        margin: { t: 20 }
-    };
-    Plotly.newPlot('segmentChart', traces4, layout4);
-
-</script>
 {% endblock %}
+

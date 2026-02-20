@@ -30,6 +30,12 @@
                     {% endif %}
 
                     <div class="mb-4">
+                        <label class="form-label fw-semibold">Loan ID <span class="text-danger">*</span></label>
+                        {{ form.loan_id }}
+                        <div class="form-text text-muted">Unique identifier for this loan (e.g., LN_1001).</div>
+                    </div>
+
+                    <div class="mb-4">
                         <label class="form-label fw-semibold">Select Client <span class="text-danger">*</span></label>
                         {{ form.client }}
                         <div class="form-text text-muted">Choose the borrower from the registered client list.</div>
@@ -51,11 +57,35 @@
                             </div>
                         </div>
                     </div>
-
+                    
                     <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Loan Type <span class="text-danger">*</span></label>
+                            {{ form.loan_type }}
+                            <div class="form-text text-muted">Select the appropriate loan category.</div>
+                            <select id="id_loan_type" name="loan_type" class="form-select">
+                                <option value="">Select Loan Type</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Business">Business</option>
+                                <option value="Agricultural">Agricultural</option>
+                                <option value="Education">Education</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Tenure (Months) <span class="text-danger">*</span></label>
                             {{ form.tenure }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Monthly EMI (KES) <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group"><i class="bi bi-calculator"></i></span>
+                                {{ form.monthly_emi }}
+                                <div class="form-text text-muted">Estimated monthly payment will be calculated automatically.</div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Collateral Value (KES) <span class="text-danger">*</span></label>
@@ -112,6 +142,67 @@
     .input-group-text {
         border-color: #e5e7eb;
         background-color: #f9fafb;
+    }
+</style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        $('.searchable-select').select2({
+            placeholder: "Start typing a client's name...",
+            allowClear: true,
+            width: '100%', // Ensures it spans the full width of your Bootstrap column
+            theme: "classic" // Gives it a clean, modern look
+        });
+    });
+</script>
+
+<script>
+    $(document).ready(function() {
+        // Function to calculate EMI
+        function calculateEMI() {
+            // Grab the numbers from the form (default to 0 if empty)
+            let amount = parseFloat($('#loan_amount').val()) || 0;
+            let tenure = parseInt($('#loan_tenure').val()) || 0;
+            let interestRate = parseFloat($('#loan_interest').val()) || 0;
+            
+            let emi = 0;
+
+            if (tenure > 0) {
+                // --- THE MATH ---
+                
+                // OPTION A: Simple Principal Division (Your original thought)
+                // emi = amount / tenure;
+
+                // OPTION B: Flat Rate EMI (Principal + Total Interest / Tenure)
+                // Assuming the interest rate is Annual (e.g., 12 for 12%) and tenure is in months
+                let totalInterest = amount * (interestRate / 100) * (tenure / 12);
+                emi = (amount + totalInterest) / tenure;
+                
+            }
+
+            // Put the result in the EMI box, rounded to 2 decimal places
+            $('#loan_emi').val(emi.toFixed(2));
+        }
+
+        // Trigger the calculation every time the user types in these boxes
+        $('#loan_amount, #loan_tenure, #loan_interest').on('input', calculateEMI);
+    });
+</script>
+
+<style>
+    .select2-container .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        padding: 5px;
+    }
+    .select2-container--classic .select2-selection--single .select2-selection__arrow {
+        height: 36px;
     }
 </style>
 {% endblock %}

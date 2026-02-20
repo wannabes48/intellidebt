@@ -7,6 +7,10 @@
             <a href="{% url 'loan_detail' loan.id %}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back
             </a>
+            
+            <button id="shareButton" class="btn btn-primary shadow-sm">
+               <i class="bi bi-share-fill"></i> Share Offer
+            </button>
             <button onclick="window.print()" class="btn btn-primary">
                 <i class="bi bi-printer"></i> Print Official Letter
             </button>
@@ -78,4 +82,28 @@
         body { background: white; }
     }
 </style>
+
+<script>
+    document.getElementById('shareButton').addEventListener('click', async () => {
+        // Customize the text that will be sent via WhatsApp/Email
+        const shareData = {
+            title: 'Settlement Offer - IntelliDebt',
+            text: 'Hello {{ loan.client.name }}, here is your official loan settlement offer reducing your balance to KES {{ settlement_amount }}. Please review.',
+            url: window.location.href // Shares the exact link to this page
+        }
+
+        try {
+            // Check if the device supports native sharing (Mobile/Modern Desktop)
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: Copy link to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Share menu not supported on this browser. The link has been copied to your clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    });
+</script>
 {% endblock %}

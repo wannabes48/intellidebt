@@ -28,8 +28,8 @@
             <div class="col-md-3">
                 <select name="risk" class="form-select">
                     <option value="">Risk: All</option>
-                    <option value="high" {% if risk_filter == 'high' %}selected{% endif %}>High Risk (> 50%)</option>
-                    <option value="low" {% if risk_filter == 'low' %}selected{% endif %}>Low Risk (< 50%)</option>
+                    <option value="high" {% if risk_filter == 'high' %}selected{% endif %}>High Risk (>0.5)</option>
+                    <option value="low" {% if risk_filter == 'low' %}selected{% endif %}>Low Risk (<0.5)</option>
                 </select>
             </div>
 
@@ -76,7 +76,7 @@
                         </td>
                         <td>
                             <span class="badge bg-{{ loan.risk_badge_color }}">
-                                {{ loan.risk_score_display }}% - {{ loan.risk_label }}
+                                {{ loan.risk_score_display }} - {{ loan.risk_label }}
                             </span>
                         </td>
                         <td>

@@ -11,19 +11,12 @@
         <form method="get" action="{% url 'dashboard' %}">
             <div class="input-group shadow-sm">
                 <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                <input type="text" name="q" class="form-control border-start-0" placeholder="Search Client or Loan ID..." value="{{ query|default:'' }}">
+                <input type="text" name="q" class="form-control border-start-0" placeholder="Search Client Name, ID, or Phone..." value="{{ query|default:'' }}">
                 <button class="btn btn-primary" type="submit">Search</button>
             </div>
         </form>
     </div>
 </div>
-
-{% if query %}
-    <div class="alert alert-info shadow-sm border-0 mb-4">
-        <i class="bi bi-info-circle-fill me-2"></i> Search Results for: <strong>"{{ query }}"</strong>
-        <a href="{% url 'dashboard' %}" class="float-end text-decoration-none small">Clear Search</a>
-    </div>
-{% endif %}
 
 <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -79,7 +72,7 @@
         <div class="card shadow-sm border-0 h-100 p-3">
             <div class="d-flex justify-content-between">
                 <div>
-                    <h6 class="text-muted text-uppercase small fw-bold">Total Amount Disbursed</h6>
+                    <h6 class="text-muted text-uppercase small fw-bold">Total Disbursed</h6>
                     <h3 class="fw-bold mb-0 text-success">KES {{ total_disbursed|floatformat:0|intcomma }}</h3>
                 </div>
                 <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
@@ -91,95 +84,153 @@
     </div>
 </div>
 
-<div class="row g-3">
-    <div class="col-lg-8">
-        
-        <div class="card mb-3 shadow-sm border-0">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0 text-dark">Loan Performance</h6>
-                <div class="small">
-                    <span class="badge bg-primary bg-opacity-10 text-primary me-2"><i class="bi bi-circle-fill me-1"></i> Repaid</span>
-                    <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-circle-fill me-1"></i> Overdue Trend</span>
-                </div>
-            </div>
-            <div class="card-body">
-                <canvas id="loanPerformanceChart" height="280"></canvas>
-            </div>
+{% if query %}
+    <div class="card shadow-sm border-0 mb-4 border-primary border-top border-3">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold text-primary">
+                <i class="bi bi-search me-2"></i> Search Results for "{{ query }}"
+            </h5>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
         </div>
-
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-header bg-white py-3">
-                <h6 class="m-0 fw-bold">Client Segmentation (ML Clustering)</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="segmentChart" height="250"></canvas>
-            </div>
-        </div>
-
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h6 class="m-0 fw-bold">Quick Actions</h6>
-            </div>
-            <div class="card-body d-flex gap-3">
-                <a href="{% url 'create_loan' %}" class="btn btn-success flex-fill py-2">
-                    <i class="bi bi-plus-circle me-2"></i> New Loan Application
-                </a>
-                <a href="{% url 'trigger_reminders' %}" class="btn btn-warning flex-fill py-2 text-dark">
-                    <i class="bi bi-bell me-2"></i> Run Automated Reminders
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4">
-        
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold">Recent Applications</h6>
-                <a href="{% url 'loan_list' %}" class="btn btn-sm btn-light text-primary fw-bold small">View All</a>
-            </div>
-            <div class="card-body p-0">
+        <div class="card-body p-0">
+            {% if search_results %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0 card-table">
-                        <thead class="table-light small text-muted text-uppercase">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
-                                <th>Applicant</th>
-                                <th>Amount</th>
+                                <th>ID</th>
+                                <th>Client Name</th>
+                                <th>Phone</th>
                                 <th>Status</th>
+                                <th>Outstanding (KES)</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for loan in recent_loans %}
+                            {% for loan in search_results %}
                             <tr>
-                                <td class="fw-bold">{{ loan.client.name }}</td>
-                                <td>KES {{ loan.amount|floatformat:0|intcomma }}</td>
+                                <td><span class="badge bg-secondary">#{{ loan.id }}</span></td>
+                                <td class="fw-semibold">{{ loan.client.name }}</td>
+                                <td>{{ loan.client.phone_number|default:"N/A" }}</td>
                                 <td>
-                                    <span class="badge small {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %}">
-                                        {{ loan.status }}
-                                    </span>
+                                    {% if loan.status == 'Active' %}
+                                        <span class="badge bg-primary bg-opacity-10 text-primary">Active</span>
+                                    {% elif loan.status == 'Defaulted' %}
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">Defaulted</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10 text-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ loan.outstanding_amount|floatformat:0|intcomma }}</td>
+                                <td>
+                                    <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-primary">
+                                        Select Profile
+                                    </a>
                                 </td>
                             </tr>
-                            {% empty %}
-                            <tr><td colspan="3" class="text-center text-muted py-3">No recent loans.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            {% else %}
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-exclamation-circle display-4 mb-3"></i>
+                    <h5>No loans or clients found matching "{{ query }}"</h5>
+                    <p>Try searching by a different name, loan ID, or phone number.</p>
+                </div>
+            {% endif %}
         </div>
-
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-header bg-white py-3">
-                <h6 class="m-0 fw-bold">Loan Status Overview</h6>
-            </div>
-            <div class="card-body">
-                <canvas id="statusChart" height="250"></canvas>
-            </div>
-        </div>
-
     </div>
-</div>
 
+{% else %}
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card mb-3 shadow-sm border-0">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0 text-dark">Loan Performance</h6>
+                    <div class="small">
+                        <span class="badge bg-primary bg-opacity-10 text-primary me-2"><i class="bi bi-circle-fill me-1"></i> Repaid</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-circle-fill me-1"></i> Overdue Trend</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="loanPerformanceChart" height="280"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold">Client Segmentation (ML Clustering)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="segmentChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold">Quick Actions</h6>
+                </div>
+                <div class="card-body d-flex gap-3">
+                    <a href="{% url 'create_loan' %}" class="btn btn-success flex-fill py-2">
+                        <i class="bi bi-plus-circle me-2"></i> New Loan Application
+                    </a>
+                    <a href="{% url 'trigger_reminders' %}" class="btn btn-warning flex-fill py-2 text-dark">
+                        <i class="bi bi-bell me-2"></i> Run Automated Reminders
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 fw-bold">Recent Applications</h6>
+                    <a href="{% url 'loan_list' %}" class="btn btn-sm btn-light text-primary fw-bold small">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 card-table">
+                            <thead class="table-light small text-muted text-uppercase">
+                                <tr>
+                                    <th>Applicant</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in recent_loans %}
+                                <tr>
+                                    <td class="fw-bold">{{ loan.client.name }}</td>
+                                    <td>KES {{ loan.amount|floatformat:0|intcomma }}</td>
+                                    <td>
+                                        <span class="badge small {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %}">
+                                            {{ loan.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-3">No recent loans.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-3">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold">Loan Status Overview</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% if not query %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // 1. Client Segmentation Chart
@@ -259,31 +310,6 @@
             },
             plugins: { legend: { display: false } }
         }
-    });
-</script>
-
-{% if query and search_match %}
-<div class="modal fade" id="searchModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="bi bi-search me-2"></i> Search Result Found</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-4">
-                    <div class="display-6 fw-bold mb-1">{{ search_match.client.name }}</div>
-                    <span class="badge bg-light text-dark border">Loan ID: #{{ search_match.id }}</span>
-                </div>
-                <div class="d-grid"><a href="{% url 'loan_detail' search_match.id %}" class="btn btn-primary">View Full Details</a></div>
-            </div>
-        </div>
-    </div>
-</div>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        var myModal = new bootstrap.Modal(document.getElementById('searchModal'));
-        myModal.show();
     });
 </script>
 {% endif %}

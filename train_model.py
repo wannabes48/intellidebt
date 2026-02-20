@@ -31,11 +31,28 @@ def build_and_save_model():
     }
     df['Segment_Name'] = df['Borrower_Segment'].map(segment_map)
     
-    high_risk_segments = ['High Loan, Higher Default Risk', 'Moderate Income, High Loan Burden']
-    df['High_Risk_Flag'] = df['Segment_Name'].apply(lambda x: 1 if x in high_risk_segments else 0)
+    # Defining True Risk
+    print("Defining true risk labels...")
+    def determine_actual_risk(row):
+        # 1. BEHAVIORAL RISK (Overrides everything): If they are actively missing payments
+        if row['Days_Past_Due'] > 15 or row['Num_Missed_Payments'] >= 1:
+            return 1
+            
+        # 2. STRUCTURAL RISK: No missed payments yet, but risky financial profile
+        if row['Segment_Name'] in ['High Loan, Higher Default Risk', 'Moderate Income, High Loan Burden']:
+            # You can tighten this: e.g., only flag if their EMI is > 40% of their income
+            if row['Monthly_EMI'] > (row['Monthly_Income'] * 0.40):
+                return 1
+                
+        # 3. LOW RISK
+        return 0
+
+    df['High_Risk_Flag'] = df.apply(determine_actual_risk, axis=1)
     
-    print("Training Random Forest Classifier (This uses lots of memory!)...")
-    classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    #Balanced Class Weights
+    print("Training Random Forest Classifier...")
+    # class_weight='balanced' forces the AI to pay equal attention to defaulters and good payers
+    classifier = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
     classifier.fit(X, df['High_Risk_Flag'])
     
     print("Saving trained model to disk...")
@@ -46,9 +63,8 @@ def build_and_save_model():
         'segment_map': segment_map,
         'features_list': features_list
     }
-    # Save the entire "brain" into a single file
     joblib.dump(model_data, 'loan_ml_model.joblib')
-    print("✅ Success! 'loan_ml_model.joblib' has been created.")
+    print("✅ Success! The 'loan_ml_model.joblib' brain has been upgraded.")
 
 if __name__ == '__main__':
     build_and_save_model()

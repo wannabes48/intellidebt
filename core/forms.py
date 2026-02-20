@@ -21,16 +21,16 @@ class ClientForm(forms.ModelForm):
 class LoanForm(forms.ModelForm):
     class Meta:
         model = Loan
-        # Notice: 'due_date' has been removed, and we include the new ML fields
-        fields = ['loan_id', 'client', 'amount', 'tenure', 'interest_rate', 'loan_type', 'collateral_value']
+        fields = ['loan_id', 'client', 'amount', 'tenure', 'interest_rate', 'collateral_value']
         widgets = {
             'loan_id': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., LN_1001'}),
-            'client': forms.Select(attrs={'class': 'form-select'}),
+            'client': forms.Select(attrs={'class': 'form-control searchable-select'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control'}),
             'tenure': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Months (e.g., 12, 24)'}),
             'interest_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.1'}),
             'loan_type': forms.Select(choices=[('Personal', 'Personal'), ('Home', 'Home'), ('Auto', 'Auto'), ('Business', 'Business')], attrs={'class': 'form-select'}),
             'collateral_value': forms.NumberInput(attrs={'class': 'form-control'}),
+            'monthly_emi': forms.NumberInput(attrs={'class': 'form-control bg-light', 'id': 'loan_emi', 'readonly': 'readonly'}),
         }
 
 class PaymentForm(forms.ModelForm):

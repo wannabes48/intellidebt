@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark">Model Performance & Evaluation</h2>
+            <p class="text-muted">Live Machine Learning Accuracy & Sanity Checks</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white h-100 p-3">
+                <h6 class="text-uppercase small fw-bold opacity-75">Overall Accuracy</h6>
+                <h3 class="fw-bold mb-0">{{ accuracy|floatformat:1 }}%</h3>
+                <small class="mt-2">Total correct predictions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white h-100 p-3">
+                <h6 class="text-uppercase small fw-bold opacity-75">Precision</h6>
+                <h3 class="fw-bold mb-0">{{ precision|floatformat:1 }}%</h3>
+                <small class="mt-2">Accuracy of "High Risk" flags</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-warning text-dark h-100 p-3">
+                <h6 class="text-uppercase small fw-bold opacity-75">Recall</h6>
+                <h3 class="fw-bold mb-0">{{ recall|floatformat:1 }}%</h3>
+                <small class="mt-2">Ability to catch actual defaults</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-info text-dark h-100 p-3">
+                <h6 class="text-uppercase small fw-bold opacity-75">F1-Score</h6>
+                <h3 class="fw-bold mb-0">{{ f1|floatformat:1 }}%</h3>
+                <small class="mt-2">Balance of Precision & Recall</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold">1. Confusion Matrix (Live Data)</h6>
+                </div>
+                <div class="card-body">
+                    {{ cm_chart|safe }}
+                    <p class="small text-muted mt-2">
+                        <strong>Goal:</strong> The numbers should be highest on the diagonal (top-left to bottom-right). This indicates the AI is correctly labeling safe loans as safe, and risky loans as risky.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-header bg-white py-3">
+                    <h6 class="m-0 fw-bold">2. Feature Importance Check</h6>
+                </div>
+                <div class="card-body">
+                    {{ importance_chart|safe }}
+                    <p class="small text-muted mt-2">
+                        <strong>Sanity Check:</strong> <code>Days_Past_Due</code> and <code>Num_Missed_Payments</code> should be the dominant bars. If demographic data like <code>Age</code> is too high, the model exhibits bias.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

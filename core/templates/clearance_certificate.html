@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        body { background-color: white !important; }
+        .certificate-container { border: 5px double #198754 !important; }
+    }
+    .certificate-container {
+        border: 5px double #198754;
+        background-color: #fff;
+        padding: 50px;
+        position: relative;
+    }
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        opacity: 0.05;
+        font-size: 10rem;
+        color: #198754;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .cert-content { position: relative; z-index: 1; }
+</style>
+
+<div class="d-flex justify-content-end mb-4 no-print gap-2">
+    <a href="{% url 'loan_detail' loan.id %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Back to Loan
+    </a>
+    <button id="shareButton" class="btn btn-primary shadow-sm">
+        <i class="bi bi-share-fill"></i> Send Certificate
+    </button>
+    <button onclick="window.print()" class="btn btn-success shadow-sm">
+        <i class="bi bi-printer-fill"></i> Save as PDF / Print
+    </button>
+</div>
+
+<div class="container mb-5">
+    <div class="certificate-container shadow-lg text-center rounded">
+        <i class="bi bi-patch-check-fill watermark"></i>
+        
+        <div class="cert-content">
+            <div class="mb-4">
+                <h1 class="fw-bold text-success display-5" style="font-family: 'Times New Roman', serif;">INTELLIDEBT</h1>
+                <p class="text-muted tracking-widest text-uppercase">Loan Management & Recovery System</p>
+            </div>
+
+            <h2 class="fw-bold mb-5 border-bottom border-2 border-success pb-3 d-inline-block" style="font-family: 'Times New Roman', serif;">
+                CERTIFICATE OF CLEARANCE
+            </h2>
+
+            <p class="fs-5 mb-4">This is to certify that</p>
+            <h2 class="fw-bold text-dark mb-4"><u>{{ loan.client.name|upper }}</u></h2>
+            
+            <p class="fs-5 mb-4 px-md-5">
+                has successfully and fully repaid their loan facility of <strong>KES {{ loan.amount|floatformat:2|intcomma }}</strong> 
+                (Loan ID: #{{ loan.id }}). 
+            </p>
+
+            <p class="fs-5 mb-5 px-md-5">
+                As of <strong>{{ date_issued|date:"F j, Y" }}</strong>, there is no outstanding balance (KES 0.00) associated with this specific account. 
+                Intellidebt Manager officially releases the borrower from all financial obligations regarding this facility.
+            </p>
+
+            <div class="row mt-5 pt-5">
+                <div class="col-6 text-center">
+                    <div class="border-top border-dark mx-auto w-75 pt-2">
+                        <strong>Authorized Signature</strong><br>
+                        <span class="text-muted small">Intellidebt Collections Dept.</span>
+                    </div>
+                </div>
+                <div class="col-6 text-center">
+                    <div class="border-top border-dark mx-auto w-75 pt-2">
+                        <strong>Official Stamp / Seal</strong><br>
+                        <span class="text-muted small">Date: {{ date_issued|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('shareButton').addEventListener('click', async () => {
+        // Customize the text that will be sent via WhatsApp/Email
+        const shareData = {
+            title: 'CERTIFICATE OF CLEARANCE',
+            text: 'Hello {{ loan.client.name }}, here is your official loan clearance certificate. Congratulations.',
+            url: window.location.href // Shares the exact link to this page
+        }
+
+        try {
+            // Check if the device supports native sharing (Mobile/Modern Desktop)
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback: Copy link to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Share menu not supported on this browser. The link has been copied to your clipboard!');
+            }
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    });
+</script>
+{% endblock %}
+

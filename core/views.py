@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from .models import Loan, Client, Reminder, CollectionLog, Payment
 from .forms import LoanForm, ClientForm, PaymentForm# You assume a ModelForm exists
 from django.db.models import Sum, Q, Count
@@ -13,6 +13,9 @@ from django.core.paginator import Paginator # For pagination
 import plotly.express as px
 import plotly.graph_objects as go
 from django.utils import timezone
+from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
+import pandas as pd
+import plotly.express as px
 # In core/views.py
 
 # In core/views.py
@@ -303,46 +306,81 @@ def loan_detail(request, loan_id):
     # FIX 1: Use pk=loan_id to search by the database ID instead of the string LN_ID
     loan = get_object_or_404(Loan, pk=loan_id)
     client = loan.client
-    
-    # Generate ML Explanation on the fly
-    ml_features = {
-        'Age': loan.client.age,
-        'Monthly_Income': float(loan.client.monthly_income),
-        'Loan_Amount': float(loan.amount),
-        'Loan_Tenure': loan.tenure,
-        'Interest_Rate': float(loan.interest_rate),
-        'Collateral_Value': float(loan.collateral_value),
-        'Outstanding_Loan_Amount': float(loan.outstanding_amount), 
-        'Monthly_EMI': float(loan.monthly_emi),
-        'Num_Missed_Payments': loan.missed_payments,
-        'Days_Past_Due': loan.days_past_due
-    }
 
-    risk_score, strategy = ml_system.predict_risk(ml_features)
-    explanation = ml_system.explain_prediction(ml_features)
+    safe_income = loan.client.monthly_income if loan.client.monthly_income > 0 else 1
+    safe_collateral = loan.collateral_value if loan.collateral_value > 0 else 1
+    missed_payments = loan.missed_payments if hasattr(loan, 'missed_payments') else 0
+    days_late = loan.days_past_due if hasattr(loan, 'days_past_due') else 0
+
+    if loan.status == 'Paid' or loan.outstanding_amount <= 0:
+        # Hardcode the perfect score for closed loans
+        risk_score = 0.0
+        explanation = ["Loan has been fully repaid. Zero risk."]
+        recommendation = "Loan Closed. No further action required. Good job!"
+        
+        # Ensure the database matches this perfect state
+        if loan.predicted_default_risk != 0.0:
+            loan.predicted_default_risk = 0.0
+            loan.save()
+    
+    else:
+    # Generate ML Explanation on the fly
+        ml_features = {
+            'Age': loan.client.age,
+            'Monthly_Income': float(loan.client.monthly_income),
+            'Loan_Amount': float(loan.amount),
+            'Loan_Tenure': loan.tenure,
+            'Interest_Rate': float(loan.interest_rate),
+            'Collateral_Value': float(loan.collateral_value),
+            'Outstanding_Loan_Amount': float(loan.outstanding_amount), 
+            'Monthly_EMI': float(loan.monthly_emi),
+            'Num_Missed_Payments': loan.missed_payments if hasattr(loan, 'missed_payments') else 0,
+            'Days_Past_Due': loan.days_past_due if hasattr(loan, 'days_past_due') else 0,
+
+            # --- THE 3 NEW REQUIRED FEATURES ---
+            'DTI_Ratio': float(loan.monthly_emi) / float(safe_income),
+            'Loan_to_Collateral': float(loan.outstanding_amount) / float(safe_collateral),
+            'Payment_Strain': float(days_late) * float(loan.monthly_emi)
+        }
+        try:
+            risk_score, strategy = ml_system.predict_risk(ml_features)
+            explanation = ml_system.explain_prediction(ml_features)
+            recommendation = strategy # Get the recommended collection channel based on the strategy
     
     # FIX 2: Replaced the undefined variable "risk" with "risk_score"
-    if loan.predicted_default_risk != risk_score:
-         loan.predicted_default_risk = risk_score
-         loan.risk_explanation = ", ".join(explanation)
-         loan.save() # Safe save
-         
-    recommendation = ml_system.recommend_channel(risk_score, loan.days_past_due, outstanding_amount=loan.outstanding_amount)
+            loan.predicted_default_risk = risk_score
+            loan.risk_explanation = ", ".join(explanation)
+            loan.save() # Safe save
+        except Exception as e:
+            print(f"ML Error in loan_detail view: {e}")
+            risk_score = loan.predicted_default_risk
+            explanation = [[loan.risk_explanation]]
+            recommendation = "Manual Review Required (ML Error)"
     
     # Safely get logs just in case the related_name differs
     try:
-        logs = loan.collection_logs.all().order_by('-attempt_date')
+        logs = CollectionLog.objects.filter(loan=loan).order_by('-id')
     except AttributeError:
-        logs = loan.collectionlog_set.all().order_by('-attempt_date')
+        logs = CollectionLog.objects.filter(loan=loan).order_by('-id')
     
     other_loans = Loan.objects.filter(client=client).exclude(id=loan.id).order_by('-id')
 
     try:
         # Assuming your related_name is 'reminders'
-        reminders = loan.reminders.all().order_by('-scheduled_date')
+        reminders = Reminder.objects.filter(loan=loan).order_by('-id')
     except AttributeError:
         # Fallback if you didn't set a related_name in models.py
-        reminders = loan.reminder_set.all().order_by('-scheduled_date')
+        reminders = Reminder.objects.filter(loan=loan).order_by('-id')
+
+    # ==========================================
+    # NEW: Fetch Transaction History (Payments)
+    # ==========================================
+    try:
+        # Tries to fetch using a custom related_name if you set one in models.py
+        transactions = Payment.objects.filter(loan=loan).order_by('-id')
+    except AttributeError:
+        # Fallback if you didn't use a related_name
+        transactions = Payment.objects.filter(loan=loan).order_by('-id')
 
     context = {
         'loan': loan,
@@ -351,7 +389,8 @@ def loan_detail(request, loan_id):
         'recommendation': recommendation,
         'logs': logs,
         'other_loans': other_loans,
-        'reminders': reminders
+        'reminders': reminders,
+        'transactions': transactions,
     }
     return render(request, 'loan_detail.html', context)
 
@@ -415,25 +454,46 @@ def add_payment(request, loan_id):
     if request.method == 'POST':
         form = PaymentForm(request.POST)
         if form.is_valid():
+            # Extract the exact amount the user is trying to pay
+            attempted_payment = float(form.cleaned_data['amount_paid'])
+            current_balance = float(loan.outstanding_amount)
+            
+            # ==========================================
+            # THE EDGE CASE FIX: Prevent Overpayment
+            # ==========================================
+            if attempted_payment > current_balance:
+                messages.error(
+                    request, 
+                    f"Transaction Failed: You entered KES {attempted_payment:.2f}, but the client only owes KES {current_balance:.2f}."
+                )
+                # Re-render the form immediately so they can fix the typo
+                return render(request, 'add_payment.html', {'form': form, 'loan': loan})
+            
             payment = form.save(commit=False)
             payment.loan = loan
             payment.save()
             
             # 1. Update Financials
-            loan.outstanding_amount -= payment.amount
+            loan.outstanding_amount = current_balance - attempted_payment
+
+            # Calculate the engineered features safely
+            safe_income = loan.client.monthly_income if loan.client.monthly_income > 0 else 1
+            safe_collateral = loan.collateral_value if loan.collateral_value > 0 else 1
+            missed_payments = loan.missed_payments if hasattr(loan, 'missed_payments') else 0
+            days_late = loan.days_past_due if hasattr(loan, 'days_past_due') else 0
             
             # 2. Check for Full Payment
             if loan.outstanding_amount <= 0:
                 loan.outstanding_amount = 0
                 loan.status = 'Paid'
                 loan.predicted_default_risk = 0.0
-                loan.risk_explanation = "Loan fully paid."
+                loan.risk_explanation = "Loan has been fully repaid. Zero risk."
                 messages.success(request, "Payment recorded. Loan is now fully PAID!")
             else:
                 # 3. AI RE-EVALUATION
                 ml_features = {
                     'Age': loan.client.age,
-                    'Monthly_Income': loan.client.income,
+                    'Monthly_Income': loan.client.monthly_income,
                     'Loan_Amount': loan.amount,
                     'Loan_Tenure': loan.tenure,
                     'Interest_Rate': loan.interest_rate,
@@ -443,20 +503,30 @@ def add_payment(request, loan_id):
                     # -------------------------------------------
                     'Monthly_EMI': loan.monthly_emi,
                     'Num_Missed_Payments': loan.missed_payments,
-                    'Days_Past_Due': loan.days_past_due
+                    'Days_Past_Due': loan.days_past_due,
+
+                    # --- THE 3 NEW REQUIRED FEATURES ---
+                    'DTI_Ratio': float(loan.monthly_emi) / float(safe_income),
+                    'Loan_to_Collateral': float(loan.outstanding_amount) / float(safe_collateral),
+                    'Payment_Strain': float(days_late) * float(loan.monthly_emi)
                 }
+
+                try:
                 
                 # A. Get fresh prediction
-                new_risk, _ = ml_system.predict_risk(ml_features)
-                loan.predicted_default_risk = new_risk
+                    new_risk, strategy = ml_system.predict_risk(ml_features)
+
+                    loan.predicted_default_risk = new_risk
                 
                 # B. --- NEW FIX: Generate & Save New Explanation ---
-                new_explanation_list = ml_system.explain_prediction(ml_features)
-                loan.risk_explanation = ", ".join(new_explanation_list)
-                
-                messages.success(request, f"Payment recorded. New Risk Score: {new_risk:.2f}")
+                    new_explanation_list = ml_system.explain_prediction(ml_features)
+                    loan.risk_explanation = ", ".join(new_explanation_list)
+                except Exception as e:
+                    print(f"ML Error during payment update: {e}")
 
             loan.save()
+                
+            messages.success(request, f"Payment of KES {payment.amount_paid} recorded. New Risk Score: {loan.predicted_default_risk:.2f}")
             return redirect('loan_detail', loan_id=loan.id)
     else:
         form = PaymentForm()
@@ -620,6 +690,7 @@ def client_list(request):
     return render(request, 'client_list.html', context)
 
 @login_required
+@permission_required('core.delete_client', raise_exception=True)
 def delete_client(request, client_id):
     client = get_object_or_404(Client, pk=client_id)
     
@@ -629,3 +700,107 @@ def delete_client(request, client_id):
         return redirect('client_list')
     
     return render(request, 'confirm_delete.html', {'object': client, 'type': 'Client'})
+
+@login_required
+@permission_required('core.delete_loan', raise_exception=True)
+def delete_loan(request, loan_id):
+    loan = get_object_or_404(Loan, id=loan_id)
+    # Optional: Prevent deleting paid loans for auditing purposes
+    if loan.status == 'Paid':
+        messages.error(request, "Security Block: Paid loans cannot be deleted, only archived.")
+        return redirect('loan_detail', loan_id=loan.id)
+        
+    if request.method == 'POST':
+        loan.delete()
+        messages.success(request, "Loan record permanently deleted.")
+        return redirect('loan_list') # Redirect to wherever your loans are listed
+    return render(request, 'confirm_delete.html', {'object': loan, 'type': 'Loan'})
+
+@login_required
+def model_performance_view(request):
+    # ==========================================
+    # 1. FEATURE IMPORTANCE CHART
+    # ==========================================
+    # Extract what the AI thinks is most important directly from the model
+    importances = ml_system.classifier.feature_importances_
+    features = ml_system.features_list
+    
+    # Create a DataFrame and sort it
+    feature_df = pd.DataFrame({'Feature': features, 'Importance': importances})
+    feature_df = feature_df.sort_values(by='Importance', ascending=True)
+    
+    fig_importance = px.bar(
+        feature_df, x='Importance', y='Feature', orientation='h',
+        title='Random Forest Feature Importance',
+        labels={'Importance': 'Impact on Risk Score', 'Feature': 'Loan Factor'},
+        color='Importance',
+        color_continuous_scale='Viridis'
+    )
+    fig_importance.update_layout(template='plotly_white', margin=dict(l=20, r=20, t=50, b=20))
+    importance_chart = fig_importance.to_html(full_html=False)
+
+    # ==========================================
+    # 2. REAL-TIME ACCURACY EVALUATION
+    # ==========================================
+    loans = Loan.objects.all()
+    y_true = []
+    y_pred = []
+    
+    for loan in loans:
+        # Determine GROUND TRUTH (What actually happened)
+        # If they missed a payment or are > 15 days late, they are truly High Risk (1)
+        true_risk = 1 if (getattr(loan, 'days_past_due', 0) > 15 or getattr(loan, 'missed_payments', 0) >= 1) else 0
+        
+        # Determine PREDICTION (What the AI guessed)
+        pred_risk = 1 if loan.predicted_default_risk >= 0.5 else 0
+        
+        y_true.append(true_risk)
+        y_pred.append(pred_risk)
+
+    # Calculate Metrics safely (zero_division=0 prevents crashes if no one has defaulted yet)
+    if y_true:
+        precision = precision_score(y_true, y_pred, zero_division=0)
+        recall = recall_score(y_true, y_pred, zero_division=0)
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+        accuracy = sum(1 for t, p in zip(y_true, y_pred) if t == p) / len(y_true)
+        
+        # Generate Confusion Matrix
+        cm = confusion_matrix(y_true, y_pred)
+        fig_cm = px.imshow(
+            cm, text_auto=True, 
+            labels=dict(x="AI Predicted Label", y="Actual True Label", color="Count"),
+            x=['Predicted Low Risk (0)', 'Predicted High Risk (1)'],
+            y=['Actually Low Risk (0)', 'Actually High Risk (1)'],
+            title="Real-Time Confusion Matrix",
+            color_continuous_scale="Blues"
+        )
+        fig_cm.update_layout(template='plotly_white')
+        cm_chart = fig_cm.to_html(full_html=False)
+    else:
+        precision = recall = f1 = accuracy = 0
+        cm_chart = "<div class='alert alert-warning'>Not enough loan data to generate matrix.</div>"
+
+    context = {
+        'importance_chart': importance_chart,
+        'cm_chart': cm_chart,
+        'precision': precision * 100,
+        'recall': recall * 100,
+        'f1': f1 * 100,
+        'accuracy': accuracy * 100,
+    }
+    return render(request, 'model_performance.html', context)
+
+@login_required
+def clearance_certificate(request, loan_id):
+    loan = get_object_or_404(Loan, id=loan_id)
+    
+    # Security Check: Only allow certificates for fully paid loans
+    if loan.status != 'Paid' or loan.outstanding_amount > 0:
+        messages.error(request, "Denied: A Clearance Certificate can only be generated for fully repaid loans.")
+        return redirect('loan_detail', loan_id=loan.id)
+        
+    context = {
+        'loan': loan,
+        'date_issued': timezone.now()
+    }
+    return render(request, 'clearance_certificate.html', context)

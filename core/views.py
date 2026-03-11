@@ -833,7 +833,7 @@ def report_generation(request):
     
     # Calculate Metrics
     total_disbursed = sum(loan.amount for loan in new_loans)
-    total_collected = sum(payment.amount for payment in recent_payments)
+    total_collected = sum(payment.amount_paid for payment in recent_payments)
     
     # CSV Export Logic
     if 'export' in request.GET:

@@ -33,6 +33,7 @@ class Loan(models.Model):
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2)
     loan_type = models.CharField(max_length=100, default="Personal")
     collateral_value = models.DecimalField(max_digits=15, decimal_places=2, default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
     
     # Repayment Status
     outstanding_amount = models.DecimalField(max_digits=15, decimal_places=2)

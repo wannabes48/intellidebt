@@ -90,7 +90,43 @@
         justify-content: center;
         background-color: var(--bg-body);
     }
+    /* The default state of the sidebar */
+    #sidebar {
+        min-width: 250px;
+        max-width: 250px;
+        transition: all 0.3s ease-in-out; /* This makes it slide smoothly! */
+    }
+
+    /* The collapsed state */
+    #sidebar.collapsed {
+        margin-left: -250px; /* Pushes the sidebar completely off the left side of the screen */
+    }
+
+    /* The main content area */
+    #main-content {
+        width: 100%;
+        transition: all 0.3s ease-in-out;
+    }
+    .status-dot {
+        position: absolute;
+        top: 0;
+        right: -6px;
+        width: 10px;
+        height: 10px;
+        background-color: #28a745; /* Bootstrap green */
+        border-radius: 50%;
+        box-shadow: 0 0 6px #28a745;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
 </style>
+<button class="btn btn-outline-secondary border-0 shadow-sm" id="sidebarToggle">
+    <i class="bi bi-list fs-4"></i>
+</button>
 </head>
 <body>
 
@@ -120,6 +156,9 @@
                 <a href="{% url 'create_client' %}" class="list-group-item list-group-item-action p-3">
                     <i class="bi bi-person-plus me-2"></i> Register Client
                 </a>
+                <a href="{% url 'reports' %}" class="list-group-item list-group-item-action p-3">
+                    <i class="bi bi-person-plus me-2"></i> Reports
+                </a>
                 <a href="{% url 'settings' %}" class="list-group-item list-group-item-action p-3">
                     <i class="bi bi-gear me-2"></i> UI Settings
                 </a>
@@ -142,7 +181,7 @@
                     {% if user.is_authenticated %}
                         <div class="me-4 d-none d-md-block">
                             <span class="ai-badge">
-                                <i class="bi bi-cpu-fill"></i> AI Engine Active
+                                <i class="bi bi-cpu-fill position-relative status-dot"></i> AI Engine Active
                             </span>
                         </div>
 
@@ -191,6 +230,21 @@
                 sidebarToggle.addEventListener('click', event => {
                     event.preventDefault();
                     document.body.classList.toggle('sb-sidenav-toggled');
+                });
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Find the button and the sidebar
+            const toggleButton = document.getElementById("sidebarToggle");
+            const sidebar = document.getElementById("sidebar");
+
+            // When the button is clicked, toggle the 'collapsed' class
+            if (toggleButton && sidebar) {
+                toggleButton.addEventListener("click", function(event) {
+                    event.preventDefault(); // Stops the page from jumping
+                    sidebar.classList.toggle("collapsed");
                 });
             }
         });

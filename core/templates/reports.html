@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>System Reports</h2>
+        <a href="?period={{ period }}&export=true" class="btn btn-success">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV
+        </a>
+    </div>
+
+    <div class="btn-group mb-4 shadow-sm">
+        <a href="?period=daily" class="btn btn-outline-primary {% if period == 'daily' %}active{% endif %}">Daily</a>
+        <a href="?period=weekly" class="btn btn-outline-primary {% if period == 'weekly' %}active{% endif %}">Weekly</a>
+        <a href="?period=monthly" class="btn btn-outline-primary {% if period == 'monthly' %}active{% endif %}">Monthly</a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white shadow-sm h-100 p-4">
+                <h6>Total Disbursed ({{ title }})</h6>
+                <h2 class="fw-bold">KES {{ total_disbursed|floatformat:2 }}</h2>
+                <small>{{ loans_count }} new facilities</small>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-success text-white shadow-sm h-100 p-4">
+                <h6>Total Collected ({{ title }})</h6>
+                <h2 class="fw-bold">KES {{ total_collected|floatformat:2 }}</h2>
+                <small>From {{ payments_count }} transactions</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

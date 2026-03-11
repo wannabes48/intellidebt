@@ -17,4 +17,5 @@ urlpatterns = [
     path('loan/<int:loan_id>/log/', views.log_interaction, name='log_interaction'),
     path('model-performance/', views.model_performance_view, name='model_performance'),
     path('loan/<int:loan_id>/clearance/', views.clearance_certificate, name='clearance_certificate'),
+    path('reports/', views.report_generation, name='reports'),
 ]

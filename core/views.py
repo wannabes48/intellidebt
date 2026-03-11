@@ -16,6 +16,12 @@ from django.utils import timezone
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
 import pandas as pd
 import plotly.express as px
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Sum, Count
+from django.contrib.auth.decorators import login_required, permission_required
 # In core/views.py
 
 # In core/views.py
@@ -804,3 +810,53 @@ def clearance_certificate(request, loan_id):
         'date_issued': timezone.now()
     }
     return render(request, 'clearance_certificate.html', context)
+
+@login_required
+def report_generation(request):
+    # Determine the timeframe from the URL (e.g., ?period=weekly)
+    period = request.GET.get('period', 'monthly') # Defaults to monthly
+    today = timezone.now()
+    
+    if period == 'daily':
+        start_date = today - timedelta(days=1)
+        title = "Daily Financial Report"
+    elif period == 'weekly':
+        start_date = today - timedelta(days=7)
+        title = "Weekly Financial Report"
+    else: # monthly
+        start_date = today - timedelta(days=30)
+        title = "Monthly Financial Report"
+
+    # Fetch data within that timeframe
+    new_loans = Loan.objects.filter(created_at__gte=start_date)
+    recent_payments = Payment.objects.filter(payment_date__gte=start_date)
+    
+    # Calculate Metrics
+    total_disbursed = sum(loan.amount for loan in new_loans)
+    total_collected = sum(payment.amount for payment in recent_payments)
+    
+    # CSV Export Logic
+    if 'export' in request.GET:
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="Intellidebt_{period}_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Report Type', title])
+        writer.writerow(['Generated On', today.strftime("%Y-%m-%d %H:%M")])
+        writer.writerow([])
+        writer.writerow(['Metric', 'Value (KES)'])
+        writer.writerow(['Total Disbursed', total_disbursed])
+        writer.writerow(['Total Collected', total_collected])
+        writer.writerow(['New Loans Issued', new_loans.count()])
+        
+        return response
+
+    context = {
+        'title': title,
+        'period': period,
+        'total_disbursed': total_disbursed,
+        'total_collected': total_collected,
+        'loans_count': new_loans.count(),
+        'payments_count': recent_payments.count(),
+    }
+    return render(request, 'reports.html', context)

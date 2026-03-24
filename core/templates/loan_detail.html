@@ -116,19 +116,13 @@
 
     <!-- Right Column: AI Risk -->
     <div class="col-md-4">
-        <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid 
-            {% if loan.status == 'Paid' or risk_score_display < 0.4 %}var(--accent)
-            {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}#f59e0b
-            {% else %}#ef4444{% endif %} !important;">
+        <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid {% if loan.status == 'Paid' or risk_score_display < 0.4 %}var(--accent){% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}#f59e0b{% else %}#ef4444{% endif %} !important;">
             <div class="card-header py-3">
                 <h6 class="m-0 fw-bold"><i class="bi bi-stars me-2" style="color: var(--primary);"></i>AI Risk Assessment</h6>
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    <div class="display-4 fw-bold 
-                        {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success
-                        {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}text-warning
-                        {% else %}text-danger{% endif %}">
+                    <div class="display-4 fw-bold {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success{% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}text-warning{% else %}text-danger{% endif %}">
                         {{ risk_score_display|floatformat:2 }}
                     </div>
                     <div class="text-muted small text-uppercase fw-bold">Default Risk Score</div>
@@ -143,20 +137,13 @@
                     </ul>
                 </div>
 
-                <div class="p-3 rounded-3 mt-auto
-                    {% if loan.status == 'Paid' or risk_score_display < 0.4 %}
-                        border" style="background: rgba(82,183,136,0.08); border-color: rgba(82,183,136,0.2) !important;">
-                        <div class="fw-bold mb-1" style="color: var(--primary); font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
-                        <span class="small" style="color: var(--primary-light);">{{ recommendation }}</span>
-                    {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}
-                        border" style="background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2) !important;">
-                        <div class="fw-bold mb-1 text-dark" style="font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
-                        <span class="small text-dark">{{ recommendation }}</span>
-                    {% else %}
-                        border" style="background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2) !important;">
-                        <div class="fw-bold mb-1 text-danger" style="font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
-                        <span class="small text-danger">{{ recommendation }}</span>
-                    {% endif %}
+                <div class="p-3 rounded-3 mt-auto border" 
+                     style="background: {% if loan.status == 'Paid' or risk_score_display < 0.4 %}rgba(82,183,136,0.08){% elif risk_score_display < 0.7 %}rgba(245,158,11,0.08){% else %}rgba(239,68,68,0.08){% endif %};
+                            border-color: {% if loan.status == 'Paid' or risk_score_display < 0.4 %}rgba(82,183,136,0.2){% elif risk_score_display < 0.7 %}rgba(245,158,11,0.2){% else %}rgba(239,68,68,0.2){% endif %} !important;">
+                    <div class="fw-bold mb-1 {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success{% elif risk_score_display < 0.7 %}text-dark{% else %}text-danger{% endif %}" style="font-size: 0.825rem;">
+                        <i class="bi bi-robot me-1"></i> Recommended Action:
+                    </div>
+                    <span class="small {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success{% elif risk_score_display < 0.7 %}text-dark{% else %}text-danger{% endif %}">{{ recommendation }}</span>
                 </div>
             </div>
         </div>

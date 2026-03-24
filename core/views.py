@@ -860,3 +860,185 @@ def report_generation(request):
         'payments_count': recent_payments.count(),
     }
     return render(request, 'reports.html', context)
+
+
+# =============================================
+# PUBLIC LANDING PAGE
+# =============================================
+def landing_page(request):
+    """Public-facing landing page — no auth required."""
+    return render(request, 'landing.html')
+
+
+# =============================================
+# CSV DATA INGESTION PIPELINE
+# =============================================
+from .ml_service import ml_system as ingestion_ml_system
+from decimal import Decimal, InvalidOperation
+
+@login_required
+def upload_portfolio(request):
+    """Admin-only CSV upload with instant ML risk scoring per row."""
+    if not request.user.is_staff:
+        messages.error(request, "Access denied. Staff privileges required.")
+        return redirect('dashboard')
+
+    results = None
+
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+
+        # Validate file type
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, "Invalid file format. Only .csv files are accepted.")
+            return redirect('upload_portfolio')
+
+        try:
+            df = pd.read_csv(csv_file)
+        except Exception as e:
+            messages.error(request, f"Failed to parse CSV: {e}")
+            return redirect('upload_portfolio')
+
+        # Required columns check
+        required_cols = ['Borrower_ID', 'Borrower_Name', 'Age', 'Monthly_Income',
+                         'Loan_ID', 'Loan_Amount', 'Loan_Tenure', 'Interest_Rate',
+                         'Monthly_EMI', 'Num_Missed_Payments', 'Days_Past_Due']
+        missing = [c for c in required_cols if c not in df.columns]
+        if missing:
+            messages.error(request, f"Missing required columns: {', '.join(missing)}")
+            return redirect('upload_portfolio')
+
+        # Fill optional columns with defaults
+        df['Gender'] = df.get('Gender', pd.Series(['Unknown'] * len(df)))
+        df['Collateral_Value'] = df.get('Collateral_Value', pd.Series([0] * len(df)))
+        df['Employment_Type'] = df.get('Employment_Type', pd.Series(['Salaried'] * len(df)))
+        df['Address'] = df.get('Address', pd.Series(['N/A'] * len(df)))
+        df['Phone_Number'] = df.get('Phone_Number', pd.Series([''] * len(df)))
+        df['Email'] = df.get('Email', pd.Series([''] * len(df)))
+        df['Num_Dependents'] = df.get('Num_Dependents', pd.Series([0] * len(df)))
+        df['Outstanding_Loan_Amount'] = df.get('Outstanding_Loan_Amount', df['Loan_Amount'])
+        df['Recovery_Status'] = df.get('Recovery_Status', pd.Series(['Pending'] * len(df)))
+
+        # Replace NaN with defaults
+        df = df.fillna({
+            'Gender': 'Unknown', 'Collateral_Value': 0, 'Employment_Type': 'Salaried',
+            'Address': 'N/A', 'Phone_Number': '', 'Email': '', 'Num_Dependents': 0,
+            'Outstanding_Loan_Amount': 0, 'Recovery_Status': 'Pending'
+        })
+
+        created_count = 0
+        skipped_count = 0
+        error_count = 0
+        error_details = []
+        loans_to_create = []
+
+        for idx, row in df.iterrows():
+            row_num = idx + 2  # Excel row (header = row 1)
+            try:
+                # 1. Get or Create Client
+                client_id = str(row['Borrower_ID']).strip()
+                client, _ = Client.objects.get_or_create(
+                    client_id=client_id,
+                    defaults={
+                        'name': str(row['Borrower_Name']).strip(),
+                        'age': int(row['Age']),
+                        'gender': str(row.get('Gender', 'Unknown')),
+                        'monthly_income': Decimal(str(row['Monthly_Income'])),
+                        'employment_type': str(row.get('Employment_Type', 'Salaried')),
+                        'address': str(row.get('Address', 'N/A')),
+                        'phone_number': str(row.get('Phone_Number', '')),
+                        'email': str(row.get('Email', '')),
+                        'num_dependents': int(row.get('Num_Dependents', 0)),
+                    }
+                )
+
+                # 2. Check for duplicate loan
+                loan_id = str(row['Loan_ID']).strip()
+                if Loan.objects.filter(loan_id=loan_id).exists():
+                    skipped_count += 1
+                    continue
+
+                # 3. Run ML Model for risk scoring
+                ml_features = {
+                    'Age': float(row['Age']),
+                    'Monthly_Income': float(row['Monthly_Income']),
+                    'Loan_Amount': float(row['Loan_Amount']),
+                    'Loan_Tenure': float(row['Loan_Tenure']),
+                    'Interest_Rate': float(row['Interest_Rate']),
+                    'Collateral_Value': float(row.get('Collateral_Value', 0)),
+                    'Outstanding_Loan_Amount': float(row.get('Outstanding_Loan_Amount', row['Loan_Amount'])),
+                    'Monthly_EMI': float(row['Monthly_EMI']),
+                    'Num_Missed_Payments': float(row['Num_Missed_Payments']),
+                    'Days_Past_Due': float(row['Days_Past_Due']),
+                }
+
+                risk_score, strategy = ingestion_ml_system.predict_risk(ml_features)
+                explanation = ingestion_ml_system.explain_prediction(ml_features)
+
+                # 4. Determine status from data
+                days_past = int(row['Days_Past_Due'])
+                missed = int(row['Num_Missed_Payments'])
+                outstanding = Decimal(str(row.get('Outstanding_Loan_Amount', row['Loan_Amount'])))
+
+                if outstanding <= 0:
+                    status = 'Paid'
+                elif days_past > 90 or missed > 5:
+                    status = 'Defaulted'
+                else:
+                    status = 'Active'
+
+                # 5. Build loan object
+                loan = Loan(
+                    loan_id=loan_id,
+                    client=client,
+                    amount=Decimal(str(row['Loan_Amount'])),
+                    tenure=int(row['Loan_Tenure']),
+                    interest_rate=Decimal(str(row['Interest_Rate'])),
+                    collateral_value=Decimal(str(row.get('Collateral_Value', 0))),
+                    outstanding_amount=outstanding,
+                    monthly_emi=Decimal(str(row['Monthly_EMI'])),
+                    missed_payments=missed,
+                    days_past_due=days_past,
+                    status=status,
+                    recovery_status=str(row.get('Recovery_Status', 'Pending')),
+                    predicted_default_risk=round(float(risk_score), 4),
+                    risk_explanation='; '.join(explanation) if explanation else strategy,
+                )
+                loans_to_create.append(loan)
+                created_count += 1
+
+            except (ValueError, InvalidOperation, KeyError) as e:
+                error_count += 1
+                error_details.append(f"Row {row_num}: {str(e)}")
+                continue
+
+        # Bulk create all valid loans
+        if loans_to_create:
+            Loan.objects.bulk_create(loans_to_create, ignore_conflicts=True)
+
+        results = {
+            'total_rows': len(df),
+            'created': created_count,
+            'skipped': skipped_count,
+            'errors': error_count,
+            'error_details': error_details[:20],  # Cap at 20 for display
+        }
+        messages.success(request, f"Portfolio upload complete: {created_count} loans created, {skipped_count} skipped.")
+
+    return render(request, 'upload_portfolio.html', {'results': results})
+
+
+def about_view(request):
+    return render(request, 'about.html')
+
+
+def contact_view(request):
+    return render(request, 'contact_us.html')
+
+
+def privacy_view(request):
+    return render(request, 'privacy.html')
+
+
+def terms_view(request):
+    return render(request, 'terms.html')

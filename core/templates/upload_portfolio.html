@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Upload Portfolio</h4>
+                <p class="text-muted small mb-0">Bulk import historical loan data with instant AI risk scoring</p>
+            </div>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Dashboard</a>
+        </div>
+
+        {% if results %}
+        <!-- Upload Results -->
+        <div class="card border-0 shadow-sm mb-4" style="border-top: 3px solid var(--accent) !important;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-center rounded-circle" style="width:48px; height:48px; background:var(--primary-pale);">
+                        <i class="bi bi-check-circle-fill fs-4" style="color:var(--primary);"></i>
+                    </div>
+                    <div>
+                        <h5 class="fw-bold mb-0">Import Complete</h5>
+                        <p class="text-muted small mb-0">File processed successfully</p>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3" style="background: var(--primary-pale); border: 1px solid var(--primary-lighter);">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.6rem; font-weight:600;">Rows Processed</small>
+                            <h4 class="fw-bold mb-0" style="color: var(--primary);">{{ results.total_rows }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 border">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.6rem; font-weight:600;">Loans Created</small>
+                            <h4 class="fw-bold mb-0 text-success">{{ results.created }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 border">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.6rem; font-weight:600;">Skipped (Duplicate)</small>
+                            <h4 class="fw-bold mb-0 text-warning">{{ results.skipped }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="p-3 rounded-3 border">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.6rem; font-weight:600;">Errors</small>
+                            <h4 class="fw-bold mb-0 text-danger">{{ results.errors }}</h4>
+                        </div>
+                    </div>
+                </div>
+                {% if results.error_details %}
+                <div class="mt-3">
+                    <details>
+                        <summary class="small fw-bold text-danger" style="cursor:pointer;">View Error Details</summary>
+                        <ul class="small text-danger mt-2" style="max-height:200px; overflow-y:auto;">
+                            {% for err in results.error_details %}
+                            <li>{{ err }}</li>
+                            {% endfor %}
+                        </ul>
+                    </details>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Upload Form -->
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius); overflow: hidden;">
+            <div class="card-header py-3 px-4" style="background: var(--primary-pale); border-bottom: 1px solid var(--primary-lighter);">
+                <h6 class="mb-0 fw-bold" style="color: var(--primary);"><i class="bi bi-cloud-arrow-up me-2"></i>CSV Upload</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" id="uploadForm">
+                    {% csrf_token %}
+
+                    <!-- Drop Zone -->
+                    <div id="dropZone" class="text-center p-5 rounded-3 mb-4" 
+                         style="border: 2px dashed var(--primary-lighter); background: var(--primary-pale); cursor: pointer; transition: all 0.2s;">
+                        <div id="dropContent">
+                            <i class="bi bi-file-earmark-spreadsheet display-4 d-block mb-3" style="color: var(--primary); opacity: 0.4;"></i>
+                            <h6 class="fw-bold">Drag & Drop your CSV file here</h6>
+                            <p class="text-muted small mb-3">or click to browse files</p>
+                            <span class="badge" style="background: var(--primary-lighter); color: var(--primary);">.csv files only</span>
+                        </div>
+                        <div id="fileInfo" class="d-none">
+                            <i class="bi bi-file-check display-4 d-block mb-2" style="color: var(--accent);"></i>
+                            <h6 class="fw-bold" id="fileName">file.csv</h6>
+                            <p class="text-muted small mb-0" id="fileSize">0 KB</p>
+                        </div>
+                        <input type="file" name="csv_file" id="csvFileInput" accept=".csv" class="d-none" required>
+                    </div>
+
+                    <!-- Expected Format -->
+                    <div class="p-3 rounded-3 mb-4 border" style="background: #FFFBEB;">
+                        <p class="fw-bold small mb-2" style="color: #92400E;"><i class="bi bi-info-circle me-1"></i> Expected CSV Columns</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-white text-dark border">Borrower_ID</span>
+                            <span class="badge bg-white text-dark border">Borrower_Name</span>
+                            <span class="badge bg-white text-dark border">Age</span>
+                            <span class="badge bg-white text-dark border">Gender</span>
+                            <span class="badge bg-white text-dark border">Monthly_Income</span>
+                            <span class="badge bg-white text-dark border">Loan_ID</span>
+                            <span class="badge bg-white text-dark border">Loan_Amount</span>
+                            <span class="badge bg-white text-dark border">Loan_Tenure</span>
+                            <span class="badge bg-white text-dark border">Interest_Rate</span>
+                            <span class="badge bg-white text-dark border">Collateral_Value</span>
+                            <span class="badge bg-white text-dark border">Monthly_EMI</span>
+                            <span class="badge bg-white text-dark border">Num_Missed_Payments</span>
+                            <span class="badge bg-white text-dark border">Days_Past_Due</span>
+                        </div>
+                        <p class="small text-muted mt-2 mb-0">Optional: Employment_Type, Address, Phone_Number, Email, Num_Dependents, Outstanding_Loan_Amount, Recovery_Status</p>
+                    </div>
+
+                    <!-- AI Notice -->
+                    <div class="d-flex align-items-center p-3 rounded-3 mb-4" style="background: var(--primary-pale); border: 1px solid var(--primary-lighter);">
+                        <i class="bi bi-cpu-fill fs-4 me-3" style="color: var(--primary);"></i>
+                        <div>
+                            <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; font-weight: 600;">AI Processing Enabled</small>
+                            <span class="fw-bold small" style="color: var(--primary);">Every row will be scored by the ML model before saving to the database.</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary py-3 fw-bold" id="submitBtn" style="font-size: 0.9rem;">
+                            <i class="bi bi-cloud-arrow-up me-2"></i>Upload & Process with AI
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('csvFileInput');
+    const dropContent = document.getElementById('dropContent');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--primary)';
+        dropZone.style.background = 'var(--primary-lighter)';
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = 'var(--primary-lighter)';
+        dropZone.style.background = 'var(--primary-pale)';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--primary-lighter)';
+        dropZone.style.background = 'var(--primary-pale)';
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            showFileInfo(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files.length) {
+            showFileInfo(this.files[0]);
+        }
+    });
+
+    function showFileInfo(file) {
+        dropContent.classList.add('d-none');
+        fileInfo.classList.remove('d-none');
+        fileName.textContent = file.name;
+        fileSize.textContent = (file.size / 1024).toFixed(1) + ' KB';
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', function() {
+        document.getElementById('submitBtn').innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+        document.getElementById('submitBtn').disabled = true;
+    });
+});
+</script>
+{% endblock %}

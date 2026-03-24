@@ -2,7 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
+    path('', views.landing_page, name='landing_page'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('loans/', views.loan_list, name='loan_list'),
     path('settings/', views.settings_view, name='settings'),
     path('analytics/', views.analytics_view, name='analytics'),
@@ -12,10 +13,15 @@ urlpatterns = [
     path('run-reminders/', views.trigger_reminders, name='trigger_reminders'),
     path('loan/<int:loan_id>/pay/', views.add_payment, name='add_payment'),
     path('loan/<int:loan_id>/settlement/', views.generate_settlement, name='generate_settlement'),
-    path('clients/', views.client_list, name='client_list'), # New
+    path('clients/', views.client_list, name='client_list'),
     path('client/<int:client_id>/delete/', views.delete_client, name='delete_client'),
     path('loan/<int:loan_id>/log/', views.log_interaction, name='log_interaction'),
     path('model-performance/', views.model_performance_view, name='model_performance'),
     path('loan/<int:loan_id>/clearance/', views.clearance_certificate, name='clearance_certificate'),
     path('reports/', views.report_generation, name='reports'),
+    path('upload-portfolio/', views.upload_portfolio, name='upload_portfolio'),
+    path('about/', views.about_view, name='about'),
+    path('contact/', views.contact_view, name='contact'),
+    path('privacy/', views.privacy_view, name='privacy'),
+    path('terms/', views.terms_view, name='terms'),
 ]

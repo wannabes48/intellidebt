@@ -1,64 +1,153 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login — Intellidebt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2D6A4F;
+            --primary-light: #40916C;
+            --accent: #52B788;
+            --primary-pale: #F0FFF4;
+        }
 
-{% block content %}
-<style>
-    .login-container {
-        min-height: 80vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .login-card {
-        max-width: 420px;
-        width: 100%;
-        background: var(--bg-card);
-        padding: 2.5rem;
-        border-radius: 16px;
-        box-shadow: 0 20px 40px rgba(45, 106, 79, 0.08);
-        border: 1px solid var(--border-color);
-    }
-    .brand-logo {
-        background: linear-gradient(135deg, var(--primary), var(--accent));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-    }
-</style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(45, 106, 79, 0.15) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, rgba(82, 183, 136, 0.1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, rgba(45, 106, 79, 0.15) 0, transparent 50%);
+            overflow: hidden;
+            position: relative;
+        }
 
-<div class="login-container">
+        /* Animated Mesh Pattern */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-40-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm0-24c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232D6A4F' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+            z-index: 0;
+        }
+
+        .btn-home {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            z-index: 10;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        .btn-home:hover { transform: translateX(-4px); color: var(--primary-light); }
+
+        .login-card {
+            max-width: 420px;
+            width: 100%;
+            background: #ffffff;
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(45, 106, 79, 0.15);
+            border: 1px solid rgba(45, 106, 79, 0.05);
+            z-index: 1;
+            position: relative;
+        }
+
+        .brand-logo {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            letter-spacing: -1px;
+            font-size: 1.8rem;
+        }
+
+        .form-control {
+            border-radius: 12px;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            padding: 0.8rem 1rem;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            background: #fff;
+            border-color: var(--primary-light);
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            padding: 0.8rem;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 10px 15px -3px rgba(45, 106, 79, 0.3);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(45, 106, 79, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <a href="/" class="btn-home">
+        <i class="bi bi-arrow-left"></i> Back to Home
+    </a>
+
     <div class="login-card">
         <div class="text-center mb-5">
-            <div class="mb-3">
-                <div class="d-inline-flex align-items-center justify-content-center rounded-3" style="width: 56px; height: 56px; background: var(--primary);">
-                    <i class="bi bi-bank text-white fs-4"></i>
-                </div>
+            <div class="d-inline-flex align-items-center justify-content-center rounded-4 mb-4" style="width: 64px; height: 64px; background: var(--primary); box-shadow: 0 10px 20px rgba(45, 106, 79, 0.2);">
+                <i class="bi bi-bank text-white fs-3"></i>
             </div>
             <h3 class="brand-logo mb-1">INTELLIDEBT</h3>
-            <p class="text-muted small">Secure Loan Management Portal</p>
+            <p class="text-muted small fw-medium">Secured Loan Management Portal</p>
         </div>
 
         <form method="post">
             {% csrf_token %}
-            <div class="form-floating mb-3">
-                <input type="text" name="username" class="form-control" id="floatingInput" placeholder="ID" style="border-radius: 10px;">
-                <label for="floatingInput" class="text-muted">Officer ID</label>
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted ms-1">OFFICER ID</label>
+                <input type="text" name="username" class="form-control" placeholder="Enter ID..." required>
             </div>
-            <div class="form-floating mb-4">
-                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password" style="border-radius: 10px;">
-                <label for="floatingPassword" class="text-muted">Secure Key</label>
+            <div class="mb-4">
+                <label class="form-label small fw-bold text-muted ms-1">SECURE KEY</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" style="border-radius: 10px; font-size: 0.9rem;">
-                AUTHENTICATE <i class="bi bi-arrow-right ms-2"></i>
+            <button type="submit" class="btn btn-primary w-100">
+                AUTHENTICATE <i class="bi bi-shield-check ms-2"></i>
             </button>
         </form>
 
-        <div class="mt-4 text-center">
-            <small class="text-muted d-block mb-1">
-                <i class="bi bi-shield-lock-fill me-1" style="color: var(--primary);"></i> 256-bit Encryption Active
-            </small>
+        <div class="mt-5 text-center">
+            <div class="d-flex align-items-center justify-content-center gap-2 opacity-50">
+                <i class="bi bi-lock-fill text-primary" style="font-size: 0.75rem;"></i>
+                <small class="text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 1px;">End-to-End Encrypted</small>
+            </div>
         </div>
     </div>
-</div>
-{% endblock %}
+
+</body>
+</html>

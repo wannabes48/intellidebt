@@ -3,48 +3,50 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
-        <div class="card shadow-lg border-0 rounded-3">
-            <div class="card-header bg-gradient bg-dark text-white d-flex align-items-center">
-                <i class="bi bi-gear-fill me-2"></i>
-                <h4 class="mb-0">System UI Settings</h4>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Settings</h4>
+                <p class="text-muted small mb-0">Customize your UI preferences</p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius);">
+            <div class="card-header py-3" style="background: var(--primary-pale); border-bottom: 1px solid var(--primary-lighter);">
+                <h6 class="mb-0 fw-bold" style="color: var(--primary);">
+                    <i class="bi bi-gear-fill me-2"></i>System UI Settings
+                </h6>
             </div>
             <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
 
-                    <!-- Visual Theme -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">
-                            <i class="bi bi-palette me-1"></i> Visual Theme
+                        <label class="form-label fw-semibold small">
+                            <i class="bi bi-palette me-1" style="color: var(--primary);"></i> Visual Theme
                         </label>
-                        <select name="theme" class="form-select shadow-sm">
+                        <select name="theme" class="form-select">
                             <option value="light" {% if current_theme == 'light' %}selected{% endif %}>Light Mode</option>
                             <option value="dark" {% if current_theme == 'dark' %}selected{% endif %}>Dark Mode</option>
                         </select>
-                        <div class="form-text text-muted">
-                            Choose how the sidebar and main area look.
-                        </div>
+                        <div class="form-text text-muted">Controls sidebar and main area appearance.</div>
                     </div>
 
-                    <!-- Rows Per Page -->
                     <div class="mb-4">
-                        <label class="form-label fw-bold">
-                            <i class="bi bi-list-ol me-1"></i> Rows Per Page
+                        <label class="form-label fw-semibold small">
+                            <i class="bi bi-list-ol me-1" style="color: var(--primary);"></i> Rows Per Page
                         </label>
-                        <select name="items_per_page" class="form-select shadow-sm">
+                        <select name="items_per_page" class="form-select">
                             <option value="10" {% if current_per_page == 10 %}selected{% endif %}>10 rows</option>
                             <option value="25" {% if current_per_page == 25 %}selected{% endif %}>25 rows</option>
                             <option value="50" {% if current_per_page == 50 %}selected{% endif %}>50 rows</option>
                         </select>
-                        <div class="form-text text-muted">
-                            Controls how many loans appear in lists.
-                        </div>
+                        <div class="form-text text-muted">Controls how many loans appear in lists.</div>
                     </div>
 
-                    <hr class="my-4">
+                    <hr style="border-color: var(--border-color);">
 
-                    <!-- Save Button -->
-                    <button type="submit" class="btn btn-success w-100 shadow-sm">
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
                         <i class="bi bi-check-circle me-1"></i> Save Preferences
                     </button>
                 </form>

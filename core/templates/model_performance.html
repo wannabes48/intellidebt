@@ -1,69 +1,79 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="fw-bold text-dark">Model Performance & Evaluation</h2>
-            <p class="text-muted">Live Machine Learning Accuracy & Sanity Checks</p>
+            <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Model Performance</h4>
+            <p class="text-muted small mb-0">Live Machine Learning Accuracy & Sanity Checks</p>
         </div>
     </div>
 
+    <!-- Metric Cards -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-primary text-white h-100 p-3">
-                <h6 class="text-uppercase small fw-bold opacity-75">Overall Accuracy</h6>
-                <h3 class="fw-bold mb-0">{{ accuracy|floatformat:1 }}%</h3>
-                <small class="mt-2">Total correct predictions</small>
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid var(--primary) !important;">
+                <div class="card-body p-3">
+                    <h6 class="text-uppercase small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Overall Accuracy</h6>
+                    <h3 class="fw-bold mb-0" style="color: var(--primary);">{{ accuracy|floatformat:1 }}%</h3>
+                    <small class="text-muted">Total correct predictions</small>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-success text-white h-100 p-3">
-                <h6 class="text-uppercase small fw-bold opacity-75">Precision</h6>
-                <h3 class="fw-bold mb-0">{{ precision|floatformat:1 }}%</h3>
-                <small class="mt-2">Accuracy of "High Risk" flags</small>
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid var(--accent) !important;">
+                <div class="card-body p-3">
+                    <h6 class="text-uppercase small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Precision</h6>
+                    <h3 class="fw-bold mb-0" style="color: var(--accent);">{{ precision|floatformat:1 }}%</h3>
+                    <small class="text-muted">Accuracy of "High Risk" flags</small>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-warning text-dark h-100 p-3">
-                <h6 class="text-uppercase small fw-bold opacity-75">Recall</h6>
-                <h3 class="fw-bold mb-0">{{ recall|floatformat:1 }}%</h3>
-                <small class="mt-2">Ability to catch actual defaults</small>
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f59e0b !important;">
+                <div class="card-body p-3">
+                    <h6 class="text-uppercase small fw-bold text-muted mb-1" style="font-size: 0.7rem;">Recall</h6>
+                    <h3 class="fw-bold mb-0" style="color: #f59e0b;">{{ recall|floatformat:1 }}%</h3>
+                    <small class="text-muted">Ability to catch defaults</small>
+                </div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card shadow-sm border-0 bg-info text-dark h-100 p-3">
-                <h6 class="text-uppercase small fw-bold opacity-75">F1-Score</h6>
-                <h3 class="fw-bold mb-0">{{ f1|floatformat:1 }}%</h3>
-                <small class="mt-2">Balance of Precision & Recall</small>
+            <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid var(--primary-light) !important;">
+                <div class="card-body p-3">
+                    <h6 class="text-uppercase small fw-bold text-muted mb-1" style="font-size: 0.7rem;">F1-Score</h6>
+                    <h3 class="fw-bold mb-0" style="color: var(--primary-light);">{{ f1|floatformat:1 }}%</h3>
+                    <small class="text-muted">Precision & Recall balance</small>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4">
+    <!-- Charts -->
+    <div class="row g-3">
         <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold">1. Confusion Matrix (Live Data)</h6>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">1. Confusion Matrix (Live Data)</h6>
                 </div>
                 <div class="card-body">
                     {{ cm_chart|safe }}
                     <p class="small text-muted mt-2">
-                        <strong>Goal:</strong> The numbers should be highest on the diagonal (top-left to bottom-right). This indicates the AI is correctly labeling safe loans as safe, and risky loans as risky.
+                        <strong>Goal:</strong> Numbers should be highest on the diagonal — correct predictions.
                     </p>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-6">
-            <div class="card shadow-sm border-0 h-100">
-                <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold">2. Feature Importance Check</h6>
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">2. Feature Importance</h6>
                 </div>
                 <div class="card-body">
                     {{ importance_chart|safe }}
                     <p class="small text-muted mt-2">
-                        <strong>Sanity Check:</strong> <code>Days_Past_Due</code> and <code>Num_Missed_Payments</code> should be the dominant bars. If demographic data like <code>Age</code> is too high, the model exhibits bias.
+                        <strong>Check:</strong> <code>Days_Past_Due</code> and <code>Num_Missed_Payments</code> should dominate. High <code>Age</code> suggests bias.
                     </p>
                 </div>
             </div>

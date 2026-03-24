@@ -2,27 +2,27 @@
 
 {% block content %}
 <style>
-    /* Specific Login Styles */
     .login-container {
-        min-height: 100vh;
+        min-height: 80vh;
         display: flex;
         align-items: center;
         justify-content: center;
     }
     .login-card {
-        max-width: 400px;
+        max-width: 420px;
         width: 100%;
-        background: white;
-        padding: 40px;
-        border-radius: 20px;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        background: var(--bg-card);
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(45, 106, 79, 0.08);
+        border: 1px solid var(--border-color);
     }
     .brand-logo {
         background: linear-gradient(135deg, var(--primary), var(--accent));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
-        letter-spacing: -1px;
+        letter-spacing: -0.5px;
     }
 </style>
 
@@ -30,31 +30,33 @@
     <div class="login-card">
         <div class="text-center mb-5">
             <div class="mb-3">
-                <i class="bi bi-shield-lock-fill text-primary display-4"></i>
+                <div class="d-inline-flex align-items-center justify-content-center rounded-3" style="width: 56px; height: 56px; background: var(--primary);">
+                    <i class="bi bi-bank text-white fs-4"></i>
+                </div>
             </div>
-            <h2 class="brand-logo">INTELLIDEBT MANAGER</h2>
-            <p class="text-muted small">Secure Financial Access Terminal</p>
+            <h3 class="brand-logo mb-1">INTELLIDEBT</h3>
+            <p class="text-muted small">Secure Loan Management Portal</p>
         </div>
 
         <form method="post">
             {% csrf_token %}
             <div class="form-floating mb-3">
-                <input type="text" name="username" class="form-control" id="floatingInput" placeholder="ID">
-                <label for="floatingInput">Officer ID</label>
+                <input type="text" name="username" class="form-control" id="floatingInput" placeholder="ID" style="border-radius: 10px;">
+                <label for="floatingInput" class="text-muted">Officer ID</label>
             </div>
             <div class="form-floating mb-4">
-                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password">
-                <label for="floatingPassword">Secure Key</label>
+                <input type="password" name="password" class="form-control" id="floatingPassword" placeholder="Password" style="border-radius: 10px;">
+                <label for="floatingPassword" class="text-muted">Secure Key</label>
             </div>
             
-            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">
+            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold" style="border-radius: 10px; font-size: 0.9rem;">
                 AUTHENTICATE <i class="bi bi-arrow-right ms-2"></i>
             </button>
         </form>
 
         <div class="mt-4 text-center">
             <small class="text-muted d-block mb-1">
-                <i class="bi bi-lock"></i> 256-bit Encryption Active
+                <i class="bi bi-shield-lock-fill me-1" style="color: var(--primary);"></i> 256-bit Encryption Active
             </small>
         </div>
     </div>

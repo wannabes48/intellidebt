@@ -1,14 +1,25 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="alert alert-success text-center mt-5" role="alert">
-    <h4 class="alert-heading">Automation Complete!</h4>
-    <p>The system successfully checked all active loans.</p>
-    <hr>
-    <p class="mb-0">
-        <strong>{{ count }}</strong> overdue reminders have been generated and logged in the system.
-    </p>
-    <br>
-    <a href="{% url 'dashboard' %}" class="btn btn-primary">Return to Dashboard</a>
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm text-center" style="border-top: 3px solid var(--accent) !important;">
+            <div class="card-body py-5 px-4">
+                <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: var(--primary-pale);">
+                    <i class="bi bi-check-circle-fill fs-3" style="color: var(--primary);"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Automation Complete!</h5>
+                <p class="text-muted">The system successfully checked all active loans.</p>
+                <hr style="border-color: var(--border-color);">
+                <p class="mb-3">
+                    <span class="fw-bold fs-4" style="color: var(--primary);">{{ count }}</span>
+                    <span class="text-muted d-block small">overdue reminders generated and logged</span>
+                </p>
+                <a href="{% url 'dashboard' %}" class="btn btn-primary px-4">
+                    <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

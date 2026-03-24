@@ -6,208 +6,474 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-    /* 1. Force Full Height Layout */
+    /* ============================================ */
+    /*  LOAN MANAGEMENT — Clean Green Theme        */
+    /* ============================================ */
+
+    :root {
+        --bg-body: #F5F6FA;
+        --bg-sidebar: #ffffff;
+        --bg-card: #ffffff;
+        --primary: #2D6A4F;
+        --primary-light: #40916C;
+        --primary-lighter: #D8F3DC;
+        --primary-pale: #F0FFF4;
+        --accent: #52B788;
+        --text-main: #1B1B1B;
+        --text-secondary: #6B7280;
+        --text-muted: #9CA3AF;
+        --border-color: #E5E7EB;
+        --border-light: #F3F4F6;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+        --radius: 12px;
+        --radius-sm: 8px;
+        --sidebar-width: 260px;
+    }
+
+    /* 1. Reset & Base Layout */
     html, body {
         height: 100%;
         margin: 0;
         padding: 0;
-        overflow-x: hidden; /* Prevent horizontal scroll */
+        overflow-x: hidden;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        font-size: 0.875rem;
     }
 
     #wrapper {
         display: flex;
         width: 100%;
-        min-height: 100vh; /* CRITICAL: Forces full vertical height */
-        align-items: stretch; /* Ensures sidebar and content stretch together */
+        min-height: 100vh;
+        align-items: stretch;
     }
 
-    /* 2. Fintech Theme Variables */
-    :root {
-        --bg-body: #f0f2f5;
-        --sidebar-bg: #0f172a;
-        --primary: #2563eb;
-        --accent: #7c3aed;
-        --text-main: #1e293b;
-    }
-
-    /* 3. Sidebar Styling */
+    /* 2. Sidebar */
     #sidebar-wrapper {
-        min-height: 100vh; /* Ensures sidebar never cuts off */
-        min-width: 260px;  /* Fixed width */
-        max-width: 260px;
-        background: linear-gradient(180deg, var(--sidebar-bg) 0%, #1e1b4b 100%);
-        color: white;
-        transition: margin 0.25s ease-out;
+        min-height: 100vh;
+        min-width: var(--sidebar-width);
+        max-width: var(--sidebar-width);
+        background: var(--bg-sidebar);
+        border-right: 1px solid var(--border-color);
+        transition: margin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        z-index: 100;
     }
 
-    /* 4. Content Area Styling */
+    .sidebar-brand {
+        padding: 1.5rem 1.25rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .sidebar-brand .brand-icon {
+        width: 36px;
+        height: 36px;
+        background: var(--primary);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .sidebar-brand .brand-text {
+        font-weight: 700;
+        font-size: 0.95rem;
+        color: var(--text-main);
+        letter-spacing: -0.3px;
+    }
+    .sidebar-brand .brand-sub {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    .sidebar-nav {
+        padding: 0.75rem 0;
+        flex: 1;
+    }
+    .sidebar-nav .nav-section-label {
+        padding: 0.5rem 1.25rem 0.35rem;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--text-muted);
+    }
+    .sidebar-nav .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.6rem 1.25rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.825rem;
+        text-decoration: none;
+        border-left: 3px solid transparent;
+        transition: all 0.15s ease;
+        margin: 1px 0;
+    }
+    .sidebar-nav .nav-link:hover {
+        color: var(--primary);
+        background: var(--primary-pale);
+        border-left-color: var(--primary-light);
+    }
+    .sidebar-nav .nav-link.active {
+        color: var(--primary);
+        background: var(--primary-lighter);
+        border-left-color: var(--primary);
+        font-weight: 600;
+    }
+    .sidebar-nav .nav-link i {
+        font-size: 1.05rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .sidebar-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    /* 3. Content Area */
     #page-content-wrapper {
         width: 100%;
         background-color: var(--bg-body);
         display: flex;
-        flex-direction: column; /* Allows content to stack properly */
+        flex-direction: column;
+        min-width: 0;
     }
 
-    /* Toggled State (Mobile/Hidden) */
-    body.sb-sidenav-toggled #sidebar-wrapper {
-        margin-left: -260px;
+    /* 4. Top Navbar */
+    .top-navbar {
+        background: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.65rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 56px;
     }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        #sidebar-wrapper {
-            margin-left: -260px;
-        }
-        body.sb-sidenav-toggled #sidebar-wrapper {
-            margin-left: 0;
-        }
+    .top-navbar .nav-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
     }
-
-    /* 5. Dark Mode Overrides */
-    {% if request.session.ui_theme == 'dark' %}
-        :root { --bg-body: #020617; --text-main: #f8fafc; }
-        .card { background-color: #1e293b; border: 1px solid #334155; color: #fff; }
-        .table { color: #fff; }
-    {% endif %}
-
-    /* General UI Polish */
-    body { font-family: 'Inter', sans-serif; background-color: var(--bg-body); color: var(--text-main); }
-    .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .btn { border-radius: 8px; font-weight: 500; }
-    .sidebar-heading { padding: 1.5rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .list-group-item-action { background: transparent; color: #94a3b8; border: none; padding: 1rem 1.5rem; }
-    .list-group-item-action:hover { color: #fff; background: rgba(255,255,255,0.05); border-left: 3px solid var(--accent); }
-    
-    /* Login Page Specific Fix */
-    .login-wrapper {
-        min-height: 100vh;
-        width: 100%;
+    .top-navbar .toggle-btn {
+        background: none;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        padding: 0.35rem 0.55rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.15s;
+        display: flex;
+        align-items: center;
+    }
+    .top-navbar .toggle-btn:hover {
+        background: var(--border-light);
+        color: var(--text-main);
+    }
+    .top-navbar .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .top-navbar .nav-right .btn-export {
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: background 0.15s;
+    }
+    .top-navbar .nav-right .btn-export:hover {
+        background: var(--primary-light);
+    }
+    .user-pill {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary-lighter);
+        border: 1px solid #B7E4C7;
+        border-radius: 50px;
+        padding: 0.3rem 0.85rem 0.3rem 0.35rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.15s;
+    }
+    .user-pill:hover { background: #c7edcf; }
+    .user-pill .user-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        background-color: var(--bg-body);
+        font-weight: 700;
+        font-size: 0.75rem;
     }
-    /* The default state of the sidebar */
-    #sidebar {
-        min-width: 250px;
-        max-width: 250px;
-        transition: all 0.3s ease-in-out; /* This makes it slide smoothly! */
-    }
-
-    /* The collapsed state */
-    #sidebar.collapsed {
-        margin-left: -250px; /* Pushes the sidebar completely off the left side of the screen */
+    .user-pill .user-name {
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: var(--primary);
     }
 
-    /* The main content area */
-    #main-content {
-        width: 100%;
-        transition: all 0.3s ease-in-out;
+    .ai-status-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--primary-pale);
+        border: 1px solid var(--primary-lighter);
+        border-radius: 50px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--primary);
     }
-    .status-dot {
-        position: absolute;
-        top: 0;
-        right: -6px;
-        width: 10px;
-        height: 10px;
-        background-color: #28a745; /* Bootstrap green */
+    .ai-status-badge .pulse-dot {
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        box-shadow: 0 0 6px #28a745;
-        animation: blink 1s infinite;
+        background: var(--accent);
+        animation: pulse-glow 1.5s infinite;
+    }
+    @keyframes pulse-glow {
+        0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(82,183,136,0.4); }
+        50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(82,183,136,0); }
     }
 
-    @keyframes blink {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
+    /* 5. Main Content */
+    .main-content {
+        padding: 1.5rem;
+        flex-grow: 1;
     }
-</style>
-<button class="btn btn-outline-secondary border-0 shadow-sm" id="sidebarToggle">
-    <i class="bi bi-list fs-4"></i>
-</button>
+
+    /* 6. Cards */
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1rem;
+    }
+    .card-header {
+        background: transparent;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.85rem 1.25rem;
+    }
+    .card-body { padding: 1.25rem; }
+
+    /* 7. Buttons */
+    .btn { border-radius: var(--radius-sm); font-weight: 500; font-size: 0.825rem; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
+    .btn-outline-primary { color: var(--primary); border-color: var(--primary); }
+    .btn-outline-primary:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-success { background: var(--accent); border-color: var(--accent); }
+    .btn-success:hover { background: var(--primary-light); border-color: var(--primary-light); }
+
+    /* 8. Tables */
+    .table { font-size: 0.825rem; }
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+    }
+    .table tbody td { padding: 0.75rem 1rem; vertical-align: middle; }
+    .table-hover tbody tr:hover { background: var(--primary-pale); }
+
+    /* 9. Badges */
+    .badge { font-weight: 500; font-size: 0.72rem; padding: 0.35em 0.65em; border-radius: 6px; }
+
+    /* 10. Form Controls */
+    .form-control, .form-select {
+        border-color: var(--border-color);
+        border-radius: var(--radius-sm);
+        font-size: 0.85rem;
+        padding: 0.55rem 0.85rem;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+    }
+
+    /* 11. Alerts */
+    .alert { border-radius: var(--radius-sm); font-size: 0.85rem; }
+
+    /* 12. Toggle & Mobile */
+    body.sb-sidenav-toggled #sidebar-wrapper { margin-left: calc(-1 * var(--sidebar-width)); }
+    @media (max-width: 768px) {
+        #sidebar-wrapper { margin-left: calc(-1 * var(--sidebar-width)); }
+        body.sb-sidenav-toggled #sidebar-wrapper { margin-left: 0; }
+    }
+
+    /* 13. Dark Mode */
+    {% if request.session.ui_theme == 'dark' %}
+    :root {
+        --bg-body: #0F1117;
+        --bg-sidebar: #1A1D27;
+        --bg-card: #1E2130;
+        --text-main: #E8E9ED;
+        --text-secondary: #9CA3AF;
+        --text-muted: #6B7280;
+        --border-color: #2D3041;
+        --border-light: #262938;
+        --primary-pale: rgba(45,106,79,0.15);
+        --primary-lighter: rgba(45,106,79,0.2);
+    }
+    .table { color: var(--text-main); }
+    .table-light { background: var(--bg-card) !important; color: var(--text-secondary) !important; }
+    .table-light th { color: var(--text-muted) !important; }
+    .bg-light { background-color: var(--bg-card) !important; }
+    .bg-white { background-color: var(--bg-card) !important; }
+    .text-dark { color: var(--text-main) !important; }
+    .text-muted { color: var(--text-muted) !important; }
+    .form-control, .form-select { background: var(--bg-body); color: var(--text-main); border-color: var(--border-color); }
+    .dropdown-menu { background: var(--bg-card); border-color: var(--border-color); }
+    .dropdown-item { color: var(--text-main); }
+    .dropdown-item:hover { background: var(--border-light); }
+    .modal-content { background: var(--bg-card); color: var(--text-main); border-color: var(--border-color); }
+    .input-group-text { background: var(--border-light); color: var(--text-secondary); border-color: var(--border-color); }
+    {% endif %}
+
+    /* 14. Scrollbar Styling */
+    #sidebar-wrapper::-webkit-scrollbar { width: 4px; }
+    #sidebar-wrapper::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+    /* 15. Pagination */
+    .page-link { color: var(--primary); border-color: var(--border-color); font-size: 0.8rem; }
+    .page-item.active .page-link { background: var(--primary); border-color: var(--primary); }
+    </style>
 </head>
 <body>
 
     <div class="d-flex" id="wrapper">
         
         {% if user.is_authenticated %}
-        <div class="border-end" id="sidebar-wrapper">
-            <div class="sidebar-heading border-bottom border-secondary">
-                <i class="bi bi-robot"></i> Intellidebt Manager
+        <div id="sidebar-wrapper">
+            <!-- Brand -->
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <i class="bi bi-bank"></i>
+                </div>
+                <div>
+                    <div class="brand-text">Intellidebt</div>
+                    <div class="brand-sub">Loan Manager</div>
+                </div>
             </div>
-            <div class="list-group list-group-flush">
-                <a href="{% url 'dashboard' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-speedometer2 me-2"></i> Dashboard
+
+            <!-- Navigation -->
+            <nav class="sidebar-nav">
+                <div class="nav-section-label">Main</div>
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Overview
                 </a>
-                <a href="{% url 'loan_list' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-table me-2"></i> All Loans
+                <a href="{% url 'loan_list' %}" class="nav-link {% if request.resolver_match.url_name == 'loan_list' %}active{% endif %}">
+                    <i class="bi bi-wallet2"></i> All Loans
                 </a>
-                <a href="{% url 'analytics' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-graph-up me-2"></i> Analytics
+                <a href="{% url 'client_list' %}" class="nav-link {% if request.resolver_match.url_name == 'client_list' %}active{% endif %}">
+                    <i class="bi bi-people"></i> Clients
                 </a>
-                <a href="{% url 'model_performance' %}" class="list-group-item list-group-item-action p-3">
+                <a href="{% url 'create_loan' %}" class="nav-link {% if request.resolver_match.url_name == 'create_loan' %}active{% endif %}">
+                    <i class="bi bi-plus-circle"></i> New Loan
+                </a>
+                <a href="{% url 'create_client' %}" class="nav-link {% if request.resolver_match.url_name == 'create_client' %}active{% endif %}">
+                    <i class="bi bi-person-plus"></i> Register Client
+                </a>
+
+                <div class="nav-section-label mt-3">Analytics</div>
+                <a href="{% url 'analytics' %}" class="nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+                <a href="{% url 'model_performance' %}" class="nav-link {% if request.resolver_match.url_name == 'model_performance' %}active{% endif %}">
                     <i class="bi bi-cpu"></i> ML Performance
                 </a>
-                <a href="{% url 'client_list' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-people-fill me-2"></i> Clients Directory
+                <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                    <i class="bi bi-file-earmark-bar-graph"></i> Reports
                 </a>
-                <a href="{% url 'create_client' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-person-plus me-2"></i> Register Client
+
+                <div class="nav-section-label mt-3">System</div>
+                <a href="{% url 'settings' %}" class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                    <i class="bi bi-gear"></i> Settings
                 </a>
-                <a href="{% url 'reports' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-person-plus me-2"></i> Reports
-                </a>
-                <a href="{% url 'settings' %}" class="list-group-item list-group-item-action p-3">
-                    <i class="bi bi-gear me-2"></i> UI Settings
-                </a>
-                
-                <div class="mt-5 p-3">
-                    <form action="{% url 'logout' %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-box-arrow-left"></i> Logout
-                        </button>
-                    </form>
-                </div>
+            </nav>
+
+            <!-- Sidebar Footer -->
+            <div class="sidebar-footer">
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100 btn-sm">
+                        <i class="bi bi-box-arrow-left me-1"></i> Logout
+                    </button>
+                </form>
             </div>
         </div>
         {% endif %}
 
         <div id="page-content-wrapper">
-            <nav class="navbar navbar-expand-lg border-bottom {% if request.session.ui_theme == 'dark' %}navbar-dark bg-dark{% else %}navbar-light bg-light{% endif %}">
-                <div class="ms-auto d-flex align-items-center">
+            <!-- Top Navbar -->
+            <div class="top-navbar">
+                <div class="nav-left">
+                    <button class="toggle-btn" id="sidebarToggle">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
                     {% if user.is_authenticated %}
-                        <div class="me-4 d-none d-md-block">
-                            <span class="ai-badge">
-                                <i class="bi bi-cpu-fill position-relative status-dot"></i> AI Engine Active
-                            </span>
-                        </div>
-
-                        <div class="dropdown">
-                            <a class="nav-link dropdown-toggle fw-bold text-dark" href="#" role="button" data-bs-toggle="dropdown">
-                                <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle" style="width: 35px; height: 35px;">
-                                    {{ user.username|slice:":1"|upper }}
-                                </div>
-                                <span class="ms-2 d-none d-sm-inline">{{ user.username }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                <li><a class="dropdown-item" href="{% url 'settings' %}"><i class="bi bi-sliders"></i> Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{% url 'logout' %}" method="post">
-                                        {% csrf_token %}
-                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-power"></i> Logout</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="ai-status-badge d-none d-md-flex">
+                        <span class="pulse-dot"></span>
+                        AI Engine Active
+                    </div>
                     {% endif %}
                 </div>
-            </nav>
+                
+                <div class="nav-right">
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <a class="user-pill" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+                            <span class="user-name d-none d-sm-inline">{{ user.username }}</span>
+                            <i class="bi bi-chevron-down" style="font-size:0.65rem; color: var(--primary);"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border">
+                            <li><a class="dropdown-item py-2" href="{% url 'settings' %}"><i class="bi bi-gear me-2"></i> Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="{% url 'logout' %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger py-2"><i class="bi bi-power me-2"></i> Logout</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
 
-            <div class="container-fluid p-4" style="flex-grow: 1;">
+            <!-- Main Content -->
+            <div class="main-content">
                 {% if messages %}
                     {% for message in messages %}
                         <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -224,27 +490,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', event => {
-            const sidebarToggle = document.body.querySelector('#sidebarToggle');
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
             if (sidebarToggle) {
-                sidebarToggle.addEventListener('click', event => {
-                    event.preventDefault();
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
                     document.body.classList.toggle('sb-sidenav-toggled');
-                });
-            }
-        });
-    </script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Find the button and the sidebar
-            const toggleButton = document.getElementById("sidebarToggle");
-            const sidebar = document.getElementById("sidebar");
-
-            // When the button is clicked, toggle the 'collapsed' class
-            if (toggleButton && sidebar) {
-                toggleButton.addEventListener("click", function(event) {
-                    event.preventDefault(); // Stops the page from jumping
-                    sidebar.classList.toggle("collapsed");
                 });
             }
         });

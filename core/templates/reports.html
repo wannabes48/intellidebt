@@ -1,33 +1,42 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>System Reports</h2>
-        <a href="?period={{ period }}&export=true" class="btn btn-success">
-            <i class="bi bi-file-earmark-spreadsheet"></i> Export to CSV
+        <div>
+            <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Reports</h4>
+            <p class="text-muted small mb-0">System financial reports</p>
+        </div>
+        <a href="?period={{ period }}&export=true" class="btn btn-primary btn-sm">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
         </a>
     </div>
 
-    <div class="btn-group mb-4 shadow-sm">
-        <a href="?period=daily" class="btn btn-outline-primary {% if period == 'daily' %}active{% endif %}">Daily</a>
-        <a href="?period=weekly" class="btn btn-outline-primary {% if period == 'weekly' %}active{% endif %}">Weekly</a>
-        <a href="?period=monthly" class="btn btn-outline-primary {% if period == 'monthly' %}active{% endif %}">Monthly</a>
+    <!-- Period Selector -->
+    <div class="d-flex gap-2 mb-4">
+        <a href="?period=daily" class="btn btn-sm {% if period == 'daily' %}btn-primary{% else %}btn-outline-primary{% endif %}">Daily</a>
+        <a href="?period=weekly" class="btn btn-sm {% if period == 'weekly' %}btn-primary{% else %}btn-outline-primary{% endif %}">Weekly</a>
+        <a href="?period=monthly" class="btn btn-sm {% if period == 'monthly' %}btn-primary{% else %}btn-outline-primary{% endif %}">Monthly</a>
     </div>
 
-    <div class="row g-4">
+    <!-- Summary Cards -->
+    <div class="row g-3">
         <div class="col-md-6">
-            <div class="card bg-primary text-white shadow-sm h-100 p-4">
-                <h6>Total Disbursed ({{ title }})</h6>
-                <h2 class="fw-bold">KES {{ total_disbursed|floatformat:2|intcomma }}</h2>
-                <small>{{ loans_count }} new facilities</small>
+            <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid var(--primary) !important;">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Total Disbursed ({{ title }})</h6>
+                    <h3 class="fw-bold mb-1" style="color: var(--primary);">KES {{ total_disbursed|floatformat:2|intcomma }}</h3>
+                    <small class="text-muted">{{ loans_count }} new facilities</small>
+                </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card bg-success text-white shadow-sm h-100 p-4">
-                <h6>Total Collected ({{ title }})</h6>
-                <h2 class="fw-bold">KES {{ total_collected|floatformat:2|intcomma }}</h2>
-                <small>From {{ payments_count }} transactions</small>
+            <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid var(--accent) !important;">
+                <div class="card-body p-4">
+                    <h6 class="text-muted small text-uppercase fw-bold mb-1">Total Collected ({{ title }})</h6>
+                    <h3 class="fw-bold mb-1" style="color: var(--accent);">KES {{ total_collected|floatformat:2|intcomma }}</h3>
+                    <small class="text-muted">From {{ payments_count }} transactions</small>
+                </div>
             </div>
         </div>
     </div>

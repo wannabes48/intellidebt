@@ -3,59 +3,53 @@
 {% block content %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold">Loan Analytics & Segmentation</h2>
-        <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">Back to Dashboard</a>
+        <div>
+            <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Analytics & Segmentation</h4>
+            <p class="text-muted small mb-0">Deep dive into loan data patterns</p>
+        </div>
+        <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
     </div>
 
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <strong>Income vs. Loan Amount</strong>
-                    <br><small class="text-muted">Higher income usually correlates with higher loans</small>
+    <div class="row g-3">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="border-top: 3px solid var(--primary) !important;">
+                <div class="card-header py-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary);">Income vs. Loan Amount</h6>
+                    <small class="text-muted">Higher income usually correlates with higher loans</small>
                 </div>
-                <div class="card-body">
-                    {{ loan_income_chart|safe }}
-                </div>
+                <div class="card-body">{{ loan_income_chart|safe }}</div>
             </div>
         </div>
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <strong>Payment History Impact</strong>
-                    <br><small class="text-muted">Effect of history on recovery status</small>
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="border-top: 3px solid var(--accent) !important;">
+                <div class="card-header py-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary);">Payment History Impact</h6>
+                    <small class="text-muted">Effect of history on recovery status</small>
                 </div>
-                <div class="card-body">
-                    {{ payment_history_chart|safe }}
-                </div>
+                <div class="card-body">{{ payment_history_chart|safe }}</div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-white">
-                    <strong>Missed Payments Analysis</strong>
-                    <br><small class="text-muted">Box plot of missed payments by recovery status</small>
+    <div class="row g-3 mt-1">
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="border-top: 3px solid #f59e0b !important;">
+                <div class="card-header py-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary);">Missed Payments Analysis</h6>
+                    <small class="text-muted">Box plot of missed payments by recovery status</small>
                 </div>
-                <div class="card-body">
-                    {{ missed_payments_chart|safe }}
-                </div>
+                <div class="card-body">{{ missed_payments_chart|safe }}</div>
             </div>
         </div>
-        <div class="col-md-12 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white">
-                    <strong>Borrower Segmentation (K-Means)</strong>
-                    <br><small class="text-muted">Clusters based on Risk & Financial Behavior</small>
+        <div class="col-md-12">
+            <div class="card border-0 shadow-sm" style="border-top: 3px solid var(--primary-light) !important;">
+                <div class="card-header py-3">
+                    <h6 class="fw-bold mb-0" style="color: var(--primary);">Borrower Segmentation (K-Means)</h6>
+                    <small class="text-muted">Clusters based on Risk & Financial Behavior</small>
                 </div>
-                <div class="card-body">
-                    {{ kmeans_chart|safe }}
-                </div>
+                <div class="card-body">{{ kmeans_chart|safe }}</div>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
-

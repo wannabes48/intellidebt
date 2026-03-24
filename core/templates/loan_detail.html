@@ -1,71 +1,82 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row">
+<div class="row g-3">
+    <!-- Left Column: Loan Details -->
     <div class="col-md-8">
-        <div class="card shadow mb-4">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="m-0 fw-bold text-primary">Loan #{{ loan.id }} - {{ loan.client.name }}</h5>
-                <span
-                    class="badge {% if loan.status == 'Active' %}bg-primary{% elif loan.status == 'Defaulted' %}bg-danger{% else %}bg-success{% endif %} p-2">
-                    {{ loan.status }}
-                </span>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <h6 class="m-0 fw-bold" style="color: var(--primary);">
+                    <i class="bi bi-wallet2 me-2"></i>Loan #{{ loan.id }} — {{ loan.client.name }}
+                </h6>
+                {% if loan.status == 'Active' %}
+                    <span class="badge" style="background: var(--primary-lighter); color: var(--primary); padding: 0.4em 0.8em;">Active</span>
+                {% elif loan.status == 'Defaulted' %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger" style="padding: 0.4em 0.8em;">Defaulted</span>
+                {% else %}
+                    <span class="badge bg-success bg-opacity-10 text-success" style="padding: 0.4em 0.8em;">Paid</span>
+                {% endif %}
             </div>
             <div class="card-body">
-                <div class="row mb-3">
+                <div class="row g-3 mb-3">
                     <div class="col-md-4">
-                        <small class="text-muted d-block text-uppercase">Outstanding</small>
-                        <h4 class="fw-bold">KES {{ loan.outstanding_amount|stringformat:".2f" }}</h4>
+                        <div class="p-3 rounded-3" style="background: var(--primary-pale); border: 1px solid var(--primary-lighter);">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.65rem; font-weight:600;">Outstanding</small>
+                            <h5 class="fw-bold mb-0" style="color: var(--primary);">KES {{ loan.outstanding_amount|stringformat:".2f" }}</h5>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <small class="text-muted d-block text-uppercase">Days Overdue</small>
-                        <h5 class="fw-bold">{{ loan.days_past_due }}</h5>
+                        <div class="p-3 rounded-3 border">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.65rem; font-weight:600;">Days Overdue</small>
+                            <h5 class="fw-bold mb-0 {% if loan.days_past_due > 0 %}text-danger{% endif %}">{{ loan.days_past_due }}</h5>
+                        </div>
                     </div>
                     <div class="col-md-4">
-                        <small class="text-muted d-block text-uppercase">Interest Rate</small>
-                        <h5 class="fw-bold">{{ loan.interest_rate }}%</h5>
+                        <div class="p-3 rounded-3 border">
+                            <small class="text-muted d-block text-uppercase" style="font-size:0.65rem; font-weight:600;">Interest Rate</small>
+                            <h5 class="fw-bold mb-0">{{ loan.interest_rate }}%</h5>
+                        </div>
                     </div>
                 </div>
 
-                <hr>
+                <hr style="border-color: var(--border-color);">
 
-                <h6 class="fw-bold text-dark mb-3">Contact Center</h6>
+                <!-- Contact Center -->
+                <h6 class="fw-bold mb-3" style="font-size: 0.85rem;">Contact Center</h6>
                 <div class="row g-2">
                     <div class="col-md-3">
-                        <a href="tel:{{ loan.client.contact }}" class="btn btn-outline-dark w-100"
-                            onclick="openLogModal('Call')">
-                            <i class="bi bi-telephone"></i> Call
+                        <a href="tel:{{ loan.client.contact }}" class="btn btn-outline-secondary w-100 btn-sm" onclick="openLogModal('Call')">
+                            <i class="bi bi-telephone me-1"></i> Call
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="mailto:{{ loan.client.email|default:'client@email.com' }}"
-                            class="btn btn-outline-dark w-100" onclick="openLogModal('Email')">
-                            <i class="bi bi-envelope"></i> Email
+                        <a href="mailto:{{ loan.client.email|default:'client@email.com' }}" class="btn btn-outline-secondary w-100 btn-sm" onclick="openLogModal('Email')">
+                            <i class="bi bi-envelope me-1"></i> Email
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-dark w-100" onclick="openLogModal('SMS')">
-                            <i class="bi bi-chat-left-text"></i> SMS
+                        <a href="#" class="btn btn-outline-secondary w-100 btn-sm" onclick="openLogModal('SMS')">
+                            <i class="bi bi-chat-left-text me-1"></i> SMS
                         </a>
                     </div>
                     <div class="col-md-3">
-                        <a href="#" class="btn btn-outline-warning w-100" onclick="openLogModal('Visit')">
-                            <i class="bi bi-geo-alt"></i> Visit
+                        <a href="#" class="btn w-100 btn-sm" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;" onclick="openLogModal('Visit')">
+                            <i class="bi bi-geo-alt me-1"></i> Visit
                         </a>
                     </div>
                 </div>
 
-                <div class="mt-4 d-flex gap-2">
+                <div class="mt-4 d-flex gap-2 flex-wrap">
                     {% if loan.status != 'Paid' %}
-                    <a href="{% url 'add_payment' loan.id %}" class="btn btn-success flex-fill">
-                        <i class="bi bi-cash-coin"></i> Record Payment
+                    <a href="{% url 'add_payment' loan.id %}" class="btn btn-primary flex-fill py-2">
+                        <i class="bi bi-cash-coin me-1"></i> Record Payment
                     </a>
                     {% endif %}
-                    <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-secondary flex-fill">
-                        <i class="bi bi-file-earmark-text"></i> Generate Letter
+                    <a href="{% url 'generate_settlement' loan.id %}" class="btn btn-outline-secondary flex-fill py-2">
+                        <i class="bi bi-file-earmark-text me-1"></i> Generate Letter
                     </a>
                     {% if loan.status == 'Paid' %}
-                    <a href="{% url 'clearance_certificate' loan.id %}" class="btn btn-success mt-3 w-100 shadow-sm">
+                    <a href="{% url 'clearance_certificate' loan.id %}" class="btn btn-success w-100 mt-2 py-2">
                         <i class="bi bi-patch-check-fill me-2"></i> Generate Clearance Certificate
                     </a>
                     {% endif %}
@@ -73,108 +84,107 @@
             </div>
         </div>
 
-        <div class="card shadow">
-            <div class="card-header bg-light">
-                <h6 class="m-0 fw-bold">Collection History</h6>
+        <!-- Collection History -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header">
+                <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">Collection History</h6>
             </div>
             <div class="card-body">
                 {% for log in logs %}
                 <div class="d-flex border-bottom pb-3 mb-3">
                     <div class="me-3">
-                        <div class="bg-light rounded-circle p-2 text-primary">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: var(--primary-pale); color: var(--primary); width: 36px; height: 36px;">
                             {% if log.method == 'Call' %}<i class="bi bi-telephone"></i>
                             {% elif log.method == 'Visit' %}<i class="bi bi-geo-alt"></i>
                             {% else %}<i class="bi bi-chat"></i>{% endif %}
                         </div>
                     </div>
-                    <div>
-                        <div class="d-flex justify-content-between w-100">
-                            <h6 class="mb-1 fw-bold">{{ log.method }}</h6>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1 fw-bold" style="font-size: 0.825rem;">{{ log.method }}</h6>
                             <small class="text-muted">{{ log.attempt_date|date:"M d, Y H:i" }}</small>
                         </div>
                         <p class="mb-0 small text-muted">{{ log.notes }}</p>
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-muted text-center py-3">No interactions logged yet.</p>
+                <p class="text-muted text-center py-3 mb-0">No interactions logged yet.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
+
+    <!-- Right Column: AI Risk -->
     <div class="col-md-4">
-    <div class="card shadow-sm border-0 h-100 border-top border-3 
-    {% if loan.status == 'Paid' or risk_score_display < 0.4 %}
-        border-success
-    {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}
-        border-warning
-    {% else %}
-        border-danger
-    {% endif %}">
-    
-    <div class="card-header bg-white py-3">
-        <h6 class="m-0 fw-bold"><i class="bi bi-stars text-primary me-2"></i>AI Risk Assessment</h6>
-    </div>
-    
-    <div class="card-body">
-        <div class="text-center mb-4">
-            <div class="display-4 fw-bold 
-                {% if loan.status == 'Paid' or risk_score_display < 0.4 %}
-                    text-success
-                {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}
-                    text-warning
-                {% else %}
-                    text-danger
-                {% endif %}">
-                {{ risk_score_display|floatformat:2 }}
+        <div class="card border-0 shadow-sm h-100" style="border-top: 3px solid 
+            {% if loan.status == 'Paid' or risk_score_display < 0.4 %}var(--accent)
+            {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}#f59e0b
+            {% else %}#ef4444{% endif %} !important;">
+            <div class="card-header py-3">
+                <h6 class="m-0 fw-bold"><i class="bi bi-stars me-2" style="color: var(--primary);"></i>AI Risk Assessment</h6>
             </div>
-            <div class="text-muted small text-uppercase fw-bold">Default Risk Score</div>
-        </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="display-4 fw-bold 
+                        {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success
+                        {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}text-warning
+                        {% else %}text-danger{% endif %}">
+                        {{ risk_score_display|floatformat:2 }}
+                    </div>
+                    <div class="text-muted small text-uppercase fw-bold">Default Risk Score</div>
+                </div>
 
-        <div class="mb-3">
-            <p class="mb-1 fw-bold small text-muted">WHY DID THE AI DECIDE THIS?</p>
-            <ul class="small ps-3 mb-0">
-                {% for item in explanation %}
-                    <li class="mb-1">{{ item }}</li>
-                {% endfor %}
-            </ul>
-        </div>
+                <div class="mb-3">
+                    <p class="mb-1 fw-bold small text-muted" style="font-size:0.72rem;">WHY DID THE AI DECIDE THIS?</p>
+                    <ul class="small ps-3 mb-0" style="color: var(--text-secondary);">
+                        {% for item in explanation %}
+                            <li class="mb-1">{{ item }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
 
-        <div class="p-3 rounded mt-auto
-            {% if loan.status == 'Paid' or risk_score_display < 0.4 %}
-                bg-success bg-opacity-10 text-success border border-success border-opacity-25
-            {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}
-                bg-warning bg-opacity-10 text-dark border border-warning border-opacity-25
-            {% else %}
-                bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25
-            {% endif %}">
-            <div class="fw-bold mb-1"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
-            <span class="small">{{ recommendation }}</span>
+                <div class="p-3 rounded-3 mt-auto
+                    {% if loan.status == 'Paid' or risk_score_display < 0.4 %}
+                        border" style="background: rgba(82,183,136,0.08); border-color: rgba(82,183,136,0.2) !important;">
+                        <div class="fw-bold mb-1" style="color: var(--primary); font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
+                        <span class="small" style="color: var(--primary-light);">{{ recommendation }}</span>
+                    {% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}
+                        border" style="background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2) !important;">
+                        <div class="fw-bold mb-1 text-dark" style="font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
+                        <span class="small text-dark">{{ recommendation }}</span>
+                    {% else %}
+                        border" style="background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2) !important;">
+                        <div class="fw-bold mb-1 text-danger" style="font-size: 0.825rem;"><i class="bi bi-robot me-1"></i> Recommended Action:</div>
+                        <span class="small text-danger">{{ recommendation }}</span>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
-</div>
 
+<!-- Interaction Log Modal -->
 <div class="modal fade" id="logModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Log Collection Activity</h5>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-bottom" style="background: var(--primary-pale);">
+                <h6 class="modal-title fw-bold" style="color: var(--primary);">Log Collection Activity</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form action="{% url 'log_interaction' loan.id %}" method="post">
                 {% csrf_token %}
                 <div class="modal-body">
                     <input type="hidden" name="channel" id="modalChannel">
-                    <p>Logging action: <strong id="modalActionDisplay"></strong></p>
+                    <p class="small">Logging action: <strong id="modalActionDisplay"></strong></p>
                     <div class="mb-3">
-                        <label class="form-label">Notes / Outcome</label>
+                        <label class="form-label small fw-semibold">Notes / Outcome</label>
                         <textarea name="notes" class="form-control" rows="3"
                             placeholder="e.g. Client promised to pay by Friday..." required></textarea>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Log</button>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save Log</button>
                 </div>
             </form>
         </div>
@@ -190,19 +200,20 @@
     }
 </script>
 
+<!-- Other Loans by Client -->
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-white py-3">
-                <h6 class="m-0 fw-bold">
-                    <i class="bi bi-clock-history me-2"></i> Other Loans by {{ loan.client.name }}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">
+                    <i class="bi bi-clock-history me-2" style="color: var(--primary);"></i> Other Loans by {{ loan.client.name }}
                 </h6>
             </div>
             <div class="card-body p-0">
                 {% if other_loans %}
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-muted small text-uppercase">
+                            <thead>
                                 <tr>
                                     <th>Loan ID</th>
                                     <th>Amount</th>
@@ -214,12 +225,12 @@
                             <tbody>
                                 {% for other_loan in other_loans %}
                                 <tr>
-                                    <td><span class="badge bg-secondary">#{{ other_loan.id }}</span></td>
+                                    <td><span class="badge bg-secondary bg-opacity-10 text-secondary">#{{ other_loan.id }}</span></td>
                                     <td>KES {{ other_loan.amount|floatformat:0 }}</td>
                                     <td>KES {{ other_loan.outstanding_amount|floatformat:0 }}</td>
                                     <td>
                                         {% if other_loan.status == 'Active' %}
-                                            <span class="badge bg-primary bg-opacity-10 text-primary">Active</span>
+                                            <span class="badge" style="background: var(--primary-lighter); color: var(--primary);">Active</span>
                                         {% elif other_loan.status == 'Defaulted' %}
                                             <span class="badge bg-danger bg-opacity-10 text-danger">Defaulted</span>
                                         {% else %}
@@ -227,9 +238,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'loan_detail' other_loan.id %}" class="btn btn-sm btn-outline-primary">
-                                            View
-                                        </a>
+                                        <a href="{% url 'loan_detail' other_loan.id %}" class="btn btn-sm btn-outline-primary">View</a>
                                     </td>
                                 </tr>
                                 {% endfor %}
@@ -238,8 +247,8 @@
                     </div>
                 {% else %}
                     <div class="p-4 text-center text-muted">
-                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
-                        <p class="mb-0">This client does not have any other loans in the system.</p>
+                        <i class="bi bi-info-circle fs-4 d-block mb-2" style="opacity:0.3;"></i>
+                        <p class="mb-0 small">This client does not have any other loans.</p>
                     </div>
                 {% endif %}
             </div>
@@ -247,120 +256,115 @@
     </div>
 </div>
 
-<div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3">
-                    <h6 class="m-0 fw-bold">
-                        <i class="bi bi-robot me-2 text-primary"></i> Automated AI Reminders History
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    {% if reminders %}
-                        <ul class="list-group list-group-flush">
-                            {% for reminder in reminders %}
-                            <li class="list-group-item p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <strong class="text-dark">
-                                        <i class="bi bi-envelope-fill text-muted me-1"></i> System Email
-                                    </strong>
-                                    <span class="text-muted small">
-                                        {{ reminder.scheduled_date|date:"M d, Y h:i A" }}
-                                    </span>
-                                </div>
-                                <div class="bg-light p-2 rounded border small text-secondary fst-italic mb-2">
-                                    "{{ reminder.message }}"
-                                </div>
-                                
-                                {% if reminder.is_sent %}
-                                    <span class="badge bg-success bg-opacity-10 text-success">
-                                        <i class="bi bi-check-all"></i> Sent Successfully
-                                    </span>
-                                {% else %}
-                                    <span class="badge bg-warning bg-opacity-10 text-warning">
-                                        <i class="bi bi-clock"></i> Pending / Scheduled
-                                    </span>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    {% else %}
-                        <div class="p-4 text-center text-muted">
-                            <i class="bi bi-envelope-x fs-4 d-block mb-2 text-light-gray"></i>
-                            <p class="mb-0">No automated reminders have been generated for this loan yet.</p>
-                        </div>
-                    {% endif %}
-                </div>
+<!-- AI Reminders -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header py-3">
+                <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">
+                    <i class="bi bi-robot me-2" style="color: var(--primary);"></i> Automated AI Reminders
+                </h6>
             </div>
-        </div>
-    </div>
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 fw-bold">
-                        <i class="bi bi-receipt me-2 text-success"></i> Transaction History
-                    </h6>
-                    {% if loan.status != 'Paid' %}
-                        <a href="{% url 'add_payment' loan.id %}" class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-plus-lg"></i> Record Payment
-                        </a>
-                    {% endif %}
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light text-muted small text-uppercase">
-                                <tr>
-                                    <th class="ps-4">Transaction ID</th>
-                                    <th>Date & Time</th>
-                                    <th>Amount Paid</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if transactions %}
-                                    {% for tx in transactions %}
-                                    <tr>
-                                        <td class="ps-4 text-muted fw-bold">#TXN-{{ tx.id|stringformat:"05d" }}</td>
-                                        
-                                        <td>
-                                            <div class="fw-bold text-dark">
-                                                {% if tx.payment_date %}
-                                                    {{ tx.payment_date|date:"M d, Y" }}
-                                                {% else %}
-                                                    Recorded
-                                                {% endif %}
-                                            </div>
-                                            <div class="small text-muted">
-                                                {% if tx.payment_date %}{{ tx.payment_date|date:"h:i A" }}{% endif %}
-                                            </div>
-                                        </td>
-                                        
-                                        <td>
-                                            <span class="text-success fw-bold">+ KES {{ tx.amount_paid|floatformat:2 }}</span>
-                                        </td>
-                                        
-                                        <td>
-                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
-                                                <i class="bi bi-check-circle-fill me-1"></i> Cleared
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="4" class="text-center py-4 text-muted">
-                                            <i class="bi bi-inbox fs-3 d-block mb-2 text-light-gray"></i>
-                                            No payments have been recorded for this loan yet.
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
+            <div class="card-body p-0">
+                {% if reminders %}
+                    <ul class="list-group list-group-flush">
+                        {% for reminder in reminders %}
+                        <li class="list-group-item p-3 border-0 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="small">
+                                    <i class="bi bi-envelope-fill text-muted me-1"></i> System Email
+                                </strong>
+                                <span class="text-muted" style="font-size: 0.72rem;">
+                                    {{ reminder.scheduled_date|date:"M d, Y h:i A" }}
+                                </span>
+                            </div>
+                            <div class="p-2 rounded border small text-secondary fst-italic mb-2" style="background: var(--primary-pale);">
+                                "{{ reminder.message }}"
+                            </div>
+                            {% if reminder.is_sent %}
+                                <span class="badge bg-success bg-opacity-10 text-success">
+                                    <i class="bi bi-check-all me-1"></i> Sent
+                                </span>
+                            {% else %}
+                                <span class="badge" style="background: #FEF3C7; color: #92400E;">
+                                    <i class="bi bi-clock me-1"></i> Pending
+                                </span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-envelope-x fs-4 d-block mb-2" style="opacity:0.3;"></i>
+                        <p class="mb-0 small">No automated reminders generated yet.</p>
                     </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 fw-bold" style="font-size: 0.85rem;">
+                    <i class="bi bi-receipt me-2" style="color: var(--accent);"></i> Transaction History
+                </h6>
+                {% if loan.status != 'Paid' %}
+                    <a href="{% url 'add_payment' loan.id %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-lg me-1"></i> Record Payment
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Transaction ID</th>
+                                <th>Date & Time</th>
+                                <th>Amount Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if transactions %}
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td class="ps-4 text-muted fw-bold">#TXN-{{ tx.id|stringformat:"05d" }}</td>
+                                    <td>
+                                        <div class="fw-semibold" style="font-size: 0.825rem;">
+                                            {% if tx.payment_date %}{{ tx.payment_date|date:"M d, Y" }}{% else %}Recorded{% endif %}
+                                        </div>
+                                        <div class="small text-muted">
+                                            {% if tx.payment_date %}{{ tx.payment_date|date:"h:i A" }}{% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold" style="color: var(--accent);">+ KES {{ tx.amount_paid|floatformat:2 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Cleared
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2" style="opacity: 0.3;"></i>
+                                        No payments recorded yet.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}

@@ -4,68 +4,71 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="d-flex justify-content-between mb-3 no-print">
-            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back
+            <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back
             </a>
-            
-            <button id="shareButton" class="btn btn-primary shadow-sm">
-               <i class="bi bi-share-fill"></i> Share Offer
-            </button>
-            <button onclick="window.print()" class="btn btn-primary">
-                <i class="bi bi-printer"></i> Print Official Letter
-            </button>
+            <div class="d-flex gap-2">
+                <button id="shareButton" class="btn btn-sm btn-outline-primary">
+                   <i class="bi bi-share-fill me-1"></i> Share
+                </button>
+                <button onclick="window.print()" class="btn btn-sm btn-primary">
+                    <i class="bi bi-printer me-1"></i> Print
+                </button>
+            </div>
         </div>
 
-        <div class="card shadow-lg p-5" style="border: 1px solid #ddd; background: #fff;">
+        <div class="card border-0 shadow-sm p-5" style="background: #fff;">
             <div class="text-center mb-5">
-                <h3>SmartLoan Financial Services</h3>
-                <p class="text-muted">123 Recovery Lane, Finance City</p>
-                <hr>
+                <div class="d-inline-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 48px; height: 48px; background: var(--primary);">
+                    <i class="bi bi-bank text-white fs-5"></i>
+                </div>
+                <h4 class="fw-bold" style="color: var(--primary);">Intellidebt Financial Services</h4>
+                <p class="text-muted small">Loan Management & Recovery System</p>
+                <hr style="border-color: var(--primary-lighter);">
             </div>
 
-            <div class="mb-4">
+            <div class="mb-4" style="font-size: 0.9rem;">
                 <p><strong>Date:</strong> {{ date }}</p>
                 <p><strong>To:</strong> {{ loan.client.name }}</p>
                 <p><strong>Address:</strong> {{ loan.client.address }}</p>
             </div>
 
-            <h5 class="text-center text-uppercase fw-bold mb-4">Subject: One-Time Settlement Offer</h5>
+            <h6 class="text-center text-uppercase fw-bold mb-4" style="color: var(--primary);">Subject: One-Time Settlement Offer</h6>
 
-            <p>Dear {{ loan.client.name }},</p>
+            <p style="font-size: 0.9rem;">Dear {{ loan.client.name }},</p>
 
-            <p>
-                We are writing to you regarding your outstanding loan (ID: {{ loan.id }}) of 
+            <p style="font-size: 0.9rem;">
+                We are writing regarding your outstanding loan (ID: {{ loan.id }}) of 
                 <strong>KES {{ loan.outstanding_amount|stringformat:".2f" }}</strong>.
             </p>
 
-            <p>
+            <p style="font-size: 0.9rem;">
                 Our automated risk assessment system has reviewed your account. 
-                Due to your current status, we are authorized to offer you a 
-                <strong>One-Time Settlement (OTS)</strong> to close this loan immediately.
+                Due to your current status, we offer a 
+                <strong>One-Time Settlement (OTS)</strong> to close this loan.
             </p>
 
-            <div class="alert alert-success border-success text-center p-4 my-4">
-                <h4>Settlement Offer</h4>
-                <p class="mb-0">Pay only: <strong>KES {{ settlement_amount|stringformat:".2f" }}</strong></p>
-                <small class="text-muted">(Discount Applied: {{ discount_percent }}% - You save KES {{ discount_amount|stringformat:".2f" }})</small>
+            <div class="text-center p-4 my-4 rounded-3" style="background: var(--primary-pale); border: 1px solid var(--primary-lighter);">
+                <h5 class="fw-bold" style="color: var(--primary);">Settlement Offer</h5>
+                <p class="mb-0 fs-5 fw-bold" style="color: var(--primary);">KES {{ settlement_amount|stringformat:".2f" }}</p>
+                <small class="text-muted">({{ discount_percent }}% discount — You save KES {{ discount_amount|stringformat:".2f" }})</small>
             </div>
 
-            <p>
-                This offer is valid for <strong>7 days</strong> from the date of this letter. 
-                Upon receipt of this amount, your loan status will be updated to "Settled/Paid" 
-                and a completion certificate will be issued.
+            <p style="font-size: 0.9rem;">
+                This offer is valid for <strong>7 days</strong>. Upon payment, your loan status 
+                will be updated to "Settled/Paid" and a clearance certificate issued.
             </p>
 
             <br><br>
             <div class="row">
                 <div class="col-6">
-                    <p>Sincerely,</p>
+                    <p style="font-size: 0.9rem;">Sincerely,</p>
                     <br>
-                    <p><strong>Recovery Department</strong><br>SmartLoan System</p>
+                    <p><strong>Recovery Department</strong><br>Intellidebt System</p>
                 </div>
                 <div class="col-6 text-end">
-                    <div class="border p-2 bg-light d-inline-block text-start no-print">
-                        <small><strong>Internal AI Note:</strong><br>{{ reason }}</small>
+                    <div class="p-2 rounded-3 d-inline-block text-start no-print" style="background: var(--primary-pale); border: 1px solid var(--primary-lighter);">
+                        <small><strong style="color: var(--primary);">AI Note:</strong><br>{{ reason }}</small>
                     </div>
                 </div>
             </div>
@@ -74,9 +77,8 @@
 </div>
 
 <style>
-    /* Hide buttons when printing */
     @media print {
-        .no-print, nav, #sidebar-wrapper { display: none !important; }
+        .no-print, nav, #sidebar-wrapper, .top-navbar { display: none !important; }
         .card { border: none !important; box-shadow: none !important; }
         #page-content-wrapper { margin: 0; padding: 0; }
         body { background: white; }
@@ -85,21 +87,17 @@
 
 <script>
     document.getElementById('shareButton').addEventListener('click', async () => {
-        // Customize the text that will be sent via WhatsApp/Email
         const shareData = {
             title: 'Settlement Offer - IntelliDebt',
             text: 'Hello {{ loan.client.name }}, here is your official loan settlement offer reducing your balance to KES {{ settlement_amount }}. Please review.',
-            url: window.location.href // Shares the exact link to this page
+            url: window.location.href
         }
-
         try {
-            // Check if the device supports native sharing (Mobile/Modern Desktop)
             if (navigator.share) {
                 await navigator.share(shareData);
             } else {
-                // Fallback: Copy link to clipboard
                 navigator.clipboard.writeText(window.location.href);
-                alert('Share menu not supported on this browser. The link has been copied to your clipboard!');
+                alert('Link copied to clipboard!');
             }
         } catch (err) {
             console.error('Error sharing:', err);

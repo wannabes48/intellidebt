@@ -3,11 +3,17 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-lg-10">
-        <h4 class="fw-bold">Client Registration</h4>
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="{% url 'client_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
+            <div>
+                <h4 class="fw-bold mb-0" style="letter-spacing: -0.3px;">Client Registration</h4>
+                <p class="text-muted small mb-0">Register a new borrower profile</p>
+            </div>
+        </div>
 
-        <div class="card shadow-sm border-0" style="border-radius: 12px; overflow: hidden;">
-            <div class="card-header bg-white border-bottom py-3 px-4">
-                <h5 class="mb-0 fw-bold text-primary">Information of Client</h5>
+        <div class="card border-0 shadow-sm" style="border-radius: var(--radius); overflow: hidden;">
+            <div class="card-header py-3 px-4" style="background: var(--primary-pale); border-bottom: 1px solid var(--primary-lighter);">
+                <h6 class="mb-0 fw-bold" style="color: var(--primary);">Client Information</h6>
             </div>
 
             <div class="card-body p-4">
@@ -15,8 +21,8 @@
                     {% csrf_token %}
 
                     {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
+                    <div class="alert alert-danger border-0" style="background: rgba(239,68,68,0.08); color: #991B1B;">
+                        <ul class="mb-0 small">
                             {% for field in form %}
                             {% for error in field.errors %}
                             <li><strong>{{ field.label }}:</strong> {{ error }}</li>
@@ -31,36 +37,35 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Client ID <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Client ID <span class="text-danger">*</span></label>
                             {{ form.client_id }}
                         </div>
                         <div class="col-md-8">
-                            <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
                             {{ form.name }}
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Age <span class="text-danger">*</span></label>
                             {{ form.age }}
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Gender <span class="text-danger">*</span></label>
                             {{ form.gender }}
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
                             {{ form.email }}
                         </div>
                     </div>
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Mobile Number <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Mobile Number <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <select class="form-select bg-light" style="max-width: 110px;" id="countryCodeSelect">
+                                <select class="form-select" style="max-width: 110px; background: var(--primary-pale);" id="countryCodeSelect">
                                     <option value="+254" selected>🇰🇪 +254</option>
                                     <option value="+1">🇺🇸 +1</option>
                                     <option value="+44">🇬🇧 +44</option>
@@ -71,54 +76,47 @@
                                     <option value="+27">🇿🇦 +27</option>
                                     <option value="+234">🇳🇬 +234</option>
                                 </select>
-
-                                <input type="text" name="phone_number" class="form-control" id="id_contact" required
-                                    placeholder="712 345 678">
+                                <input type="text" name="phone_number" class="form-control" id="id_contact" required placeholder="712 345 678">
                             </div>
-                            <small class="text-muted">Select country code and enter number (e.g., 712 345 678).</small>
+                            <small class="text-muted">Select country code and enter number.</small>
                         </div>
-
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Employment Type <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Employment Type <span class="text-danger">*</span></label>
                             {{ form.employment_type }}
                         </div>
                     </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold"> Address <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Address <span class="text-danger">*</span></label>
                             {{ form.address }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Number of Dependents <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Number of Dependents <span class="text-danger">*</span></label>
                             {{ form.num_dependents }}
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Monthly Income (KES) <span
-                                    class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Monthly Income (KES) <span class="text-danger">*</span></label>
                             {{ form.monthly_income }}
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Verification Status</label>
+                            <label class="form-label fw-semibold small">Verification Status</label>
                             <input type="text" class="form-control" value="Pending Approval" disabled
-                                style="background-color: #f3f4f6; color: #6b7280;">
+                                style="background-color: var(--primary-pale); color: var(--text-muted);">
                         </div>
                     </div>
 
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary py-3 fw-bold shadow-sm"
-                            style="background-color: #4f46e5; border: none; font-size: 1rem; border-radius: 8px;">
-                            Submit Client Profile
+                        <button type="submit" class="btn btn-primary py-3 fw-bold" style="font-size: 0.9rem;">
+                            <i class="bi bi-person-check me-2"></i>Submit Client Profile
                         </button>
                     </div>
 
                     <div class="text-center mt-3">
-                        <a href="{% url 'client_list' %}" class="text-decoration-none text-muted small">Cancel and go
-                            back</a>
+                        <a href="{% url 'client_list' %}" class="text-decoration-none text-muted small">Cancel and go back</a>
                     </div>
                 </form>
             </div>
@@ -126,58 +124,15 @@
     </div>
 </div>
 
-<style>
-    .form-control,
-    .form-select {
-        border-color: #e5e7eb;
-        padding: 0.75rem 1rem;
-        border-radius: 6px;
-        color: #1f2937;
-        font-size: 0.95rem;
-    }
-
-    .form-control:focus,
-    .form-select:focus {
-        border-color: #4f46e5;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        outline: none;
-    }
-
-    .form-label {
-        font-size: 0.9rem;
-        color: #374151;
-        margin-bottom: 0.4rem;
-    }
-
-    .input-group-text {
-        border-color: #e5e7eb;
-    }
-</style>
-
 <script>
     document.getElementById('clientForm').addEventListener('submit', function (e) {
-        // 1. Get Elements
         const codeInput = document.getElementById('countryCodeSelect');
         const numberInput = document.getElementById('id_contact');
-
-        // 2. Get Values
         const code = codeInput.value;
         let number = numberInput.value.trim();
-
-        // 3. Clean up the user input (remove leading zero or existing +)
-        if (number.startsWith('0')) {
-            number = number.substring(1);
-        }
-        // If user accidentally typed the code too (e.g. +254...), strip it to avoid duplication
-        if (number.startsWith(code)) {
-            number = number.substring(code.length);
-        } else if (number.startsWith('+')) {
-            // Remove any other plus sign to be safe
-            number = number.substring(1);
-        }
-
-        // 4. Update the input value to the combined format (e.g., "+254712345678")
-        // This updated value is what gets sent to the server.
+        if (number.startsWith('0')) { number = number.substring(1); }
+        if (number.startsWith(code)) { number = number.substring(code.length); }
+        else if (number.startsWith('+')) { number = number.substring(1); }
         numberInput.value = code + number;
     });
 </script>

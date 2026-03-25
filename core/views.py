@@ -119,19 +119,26 @@ def create_loan(request):
             }
             
             try:
-                risk_prob, strategy = ml_system.predict_risk(ml_features)
+                # NEW WAY: The Smart Threshold
+                threshold = ml_system.get('custom_threshold', 0.50)
+                df_input = pd.DataFrame([ml_features])[ml_system.features_list]
+                risk_probability = ml_system.classifier.predict_proba(df_input)[0][1]
+                predicted_default_risk = 1 if risk_probability >= threshold else 0
+                
                 explanation = ml_system.explain_prediction(ml_features)
                 
-                loan.predicted_default_risk = risk_prob
+                loan.predicted_default_risk = predicted_default_risk
+                loan.risk_percentage = risk_probability * 100
                 loan.risk_explanation = ", ".join(explanation)
             except Exception as e:
-                # Fallback if ML fails, so we can still save the loan
+                # Fallback if ML fails
                 print(f"ML Error: {e}")
                 loan.predicted_default_risk = 0.5
+                loan.risk_percentage = 50.0
                 loan.risk_explanation = "Manual Review Required (ML Error)"
 
             loan.save()
-            messages.success(request, f"Loan Created! Risk Score: {loan.predicted_default_risk:.2f}")
+            messages.success(request, f"Loan Created! Risk Assessment: {'Risky' if loan.predicted_default_risk == 1 else 'Low Risk'}")
             return redirect('dashboard')
         else:
             # Debugging: Print errors to console so you can see them
@@ -349,19 +356,32 @@ def loan_detail(request, loan_id):
             'Payment_Strain': float(days_late) * float(loan.monthly_emi)
         }
         try:
-            risk_score, strategy = ml_system.predict_risk(ml_features)
+            # NEW WAY: The Smart Threshold
+            threshold = ml_system.get('custom_threshold', 0.50)
+            df_input = pd.DataFrame([ml_features])[ml_system.features_list]
+            risk_probability = ml_system.classifier.predict_proba(df_input)[0][1]
+            risk_score = 1 if risk_probability >= threshold else 0
+            
             explanation = ml_system.explain_prediction(ml_features)
-            recommendation = strategy # Get the recommended collection channel based on the strategy
+            recommendation = ml_system.recommend_channel(risk_probability, days_late, loan.outstanding_amount)['action']
     
-    # FIX 2: Replaced the undefined variable "risk" with "risk_score"
+            # ==========================================
+            # NEW: Format for the UI
+            # ==========================================
+            risk_percentage = round(risk_probability * 100, 1)
+            threshold_percentage = int(threshold * 100) 
+
             loan.predicted_default_risk = risk_score
+            loan.risk_percentage = risk_percentage
             loan.risk_explanation = ", ".join(explanation)
-            loan.save() # Safe save
+            loan.save()
         except Exception as e:
             print(f"ML Error in loan_detail view: {e}")
             risk_score = loan.predicted_default_risk
             explanation = [[loan.risk_explanation]]
             recommendation = "Manual Review Required (ML Error)"
+            risk_percentage = loan.risk_percentage if loan.risk_percentage else round(risk_score * 100, 1)
+            threshold_percentage = 50
     
     # Safely get logs just in case the related_name differs
     try:
@@ -391,6 +411,8 @@ def loan_detail(request, loan_id):
     context = {
         'loan': loan,
         'risk_score_display': round(risk_score, 2),
+        'risk_percentage': risk_percentage,
+        'threshold_percentage': threshold_percentage,
         'explanation': explanation,
         'recommendation': recommendation,
         'logs': logs,
@@ -518,13 +540,14 @@ def add_payment(request, loan_id):
                 }
 
                 try:
-                
-                # A. Get fresh prediction
-                    new_risk, strategy = ml_system.predict_risk(ml_features)
+                    # NEW WAY: The Smart Threshold
+                    threshold = ml_system.get('custom_threshold', 0.50)
+                    df_input = pd.DataFrame([ml_features])[ml_system.features_list]
+                    risk_probability = ml_system.classifier.predict_proba(df_input)[0][1]
+                    new_risk = 1 if risk_probability >= threshold else 0
 
                     loan.predicted_default_risk = new_risk
-                
-                # B. --- NEW FIX: Generate & Save New Explanation ---
+                    loan.risk_percentage = risk_probability * 100
                     new_explanation_list = ml_system.explain_prediction(ml_features)
                     loan.risk_explanation = ", ".join(new_explanation_list)
                 except Exception as e:
@@ -609,36 +632,25 @@ def loan_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # 5. Calculate scores for the final page block
+    # 5. Attach display helpers
     for loan in page_obj:
-        features = {
-            'Age': loan.client.age,
-            'Monthly_Income': float(loan.client.monthly_income),
-            'Loan_Amount': float(loan.amount),
-            'Loan_Tenure': loan.tenure,
-            'Interest_Rate': float(loan.interest_rate),
-            'Collateral_Value': float(loan.collateral_value),
-            'Outstanding_Loan_Amount': float(loan.outstanding_amount),
-            'Monthly_EMI': float(loan.monthly_emi),
-            'Num_Missed_Payments': loan.missed_payments,
-            'Days_Past_Due': loan.days_past_due
-        }
-        
-        # Get prediction
-        risk_score, strategy = ml_system.predict_risk(features)
-        
-        # Attach the score and colors directly to the loan object
-        loan.risk_score_display = round(risk_score, 2) 
-        
-        if risk_score > 0.75:
-            loan.risk_badge_color = "danger"   # Red
-            loan.risk_label = "High Risk"
-        elif risk_score >= 0.50:
-            loan.risk_badge_color = "warning"  # Yellow/Orange
-            loan.risk_label = "Medium Risk"
+        if loan.risk_percentage is not None:
+            loan.risk_score_display = round(loan.risk_percentage, 1) 
+            
+            # thresholds for badges (consistent with progress bar colors)
+            if loan.risk_percentage >= 70:
+                loan.risk_badge_color = "danger"
+                loan.risk_label = "High Risk"
+            elif loan.risk_percentage >= 40:
+                loan.risk_badge_color = "warning"
+                loan.risk_label = "Medium Risk"
+            else:
+                loan.risk_badge_color = "success"
+                loan.risk_label = "Low Risk"
         else:
-            loan.risk_badge_color = "success"  # Green
-            loan.risk_label = "Low Risk"
+            loan.risk_score_display = "N/A"
+            loan.risk_badge_color = "light"
+            loan.risk_label = "Pending"
             
     context = {
         'loans': page_obj, 
@@ -758,7 +770,8 @@ def model_performance_view(request):
         true_risk = 1 if (getattr(loan, 'days_past_due', 0) > 15 or getattr(loan, 'missed_payments', 0) >= 1) else 0
         
         # Determine PREDICTION (What the AI guessed)
-        pred_risk = 1 if loan.predicted_default_risk >= 0.5 else 0
+        threshold = ml_system.get('custom_threshold', 0.50)
+        pred_risk = 1 if loan.predicted_default_risk >= threshold else 0
         
         y_true.append(true_risk)
         y_pred.append(pred_risk)
@@ -972,7 +985,12 @@ def upload_portfolio(request):
                     'Days_Past_Due': float(row['Days_Past_Due']),
                 }
 
-                risk_score, strategy = ingestion_ml_system.predict_risk(ml_features)
+                # NEW WAY: The Smart Threshold
+                threshold = ingestion_ml_system.get('custom_threshold', 0.50)
+                df_input_row = pd.DataFrame([ml_features])[ingestion_ml_system.features_list]
+                risk_probability = ingestion_ml_system.classifier.predict_proba(df_input_row)[0][1]
+                risk_score_binary = 1 if risk_probability >= threshold else 0
+                
                 explanation = ingestion_ml_system.explain_prediction(ml_features)
 
                 # 4. Determine status from data
@@ -1001,8 +1019,9 @@ def upload_portfolio(request):
                     days_past_due=days_past,
                     status=status,
                     recovery_status=str(row.get('Recovery_Status', 'Pending')),
-                    predicted_default_risk=round(float(risk_score), 4),
-                    risk_explanation='; '.join(explanation) if explanation else strategy,
+                    predicted_default_risk=float(risk_score_binary),
+                    risk_percentage=risk_probability * 100,
+                    risk_explanation='; '.join(explanation) if explanation else "System Assessment Complete",
                 )
                 loans_to_create.append(loan)
                 created_count += 1
@@ -1039,6 +1058,12 @@ def contact_view(request):
 def privacy_view(request):
     return render(request, 'privacy.html')
 
+
+from django.http import JsonResponse
+
+def chrome_devtools_json(request):
+    """Serves the .well-known file to resolve DevTools 404 errors."""
+    return JsonResponse({})
 
 def terms_view(request):
     return render(request, 'terms.html')

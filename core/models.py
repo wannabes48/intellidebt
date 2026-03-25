@@ -48,6 +48,7 @@ class Loan(models.Model):
     
     # ML Fields
     predicted_default_risk = models.FloatField(default=0.0)
+    risk_percentage = models.FloatField(null=True, blank=True)
     risk_explanation = models.TextField(blank=True, null=True)
 
     def __str__(self):

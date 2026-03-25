@@ -79,9 +79,28 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="badge bg-{{ loan.risk_badge_color }} bg-opacity-10 text-{{ loan.risk_badge_color }}">
-                                {{ loan.risk_score_display }} - {{ loan.risk_label }}
-                            </span>
+                            {% if loan.risk_percentage != None %}
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2 small fw-bold text-secondary" style="min-width: 40px;">
+                                        {{ loan.risk_percentage|floatformat:1 }}%
+                                    </span>
+                                    
+                                    <div class="progress w-100 shadow-sm" style="height: 8px; max-width: 80px;">
+                                        <div class="progress-bar 
+                                            {% if loan.risk_percentage < 40 %} bg-success 
+                                            {% elif loan.risk_percentage < 70 %} bg-warning 
+                                            {% else %} bg-danger {% endif %}" 
+                                            role="progressbar" 
+                                            style="width: {{ loan.risk_percentage }}%;" 
+                                            aria-valuenow="{{ loan.risk_percentage }}" 
+                                            aria-valuemin="0" 
+                                            aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-light text-muted border">Pending AI Scan</span>
+                            {% endif %}
                         </td>
                         <td>
                             <a href="{% url 'loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">View</a>

@@ -122,13 +122,40 @@
             </div>
             <div class="card-body">
                 <div class="text-center mb-4">
-                    <div class="display-4 fw-bold {% if loan.status == 'Paid' or risk_score_display < 0.4 %}text-success{% elif risk_score_display >= 0.4 and risk_score_display < 0.7 %}text-warning{% else %}text-danger{% endif %}">
-                        {{ risk_score_display|floatformat:2 }}
+                    <div class="display-4 fw-bold {% if loan.status == 'Paid' or risk_percentage < 40 %}text-success{% elif risk_percentage >= 40 and risk_percentage < 70 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ risk_percentage|floatformat:2 }}%
                     </div>
                     <div class="text-muted small text-uppercase fw-bold">Default Risk Score</div>
                 </div>
 
-                <div class="mb-3">
+                <div class="mt-4 p-3 bg-light rounded border">
+                    <div class="d-flex justify-content-between align-items-end mb-2">
+                        <span class="fw-bold text-secondary small text-uppercase">
+                            <i class="bi bi-cpu me-1"></i> AI Confidence Score
+                        </span>
+                        <span class="fw-bold fs-5 {% if risk_percentage >= threshold_percentage %}text-danger{% else %}text-success{% endif %}">
+                            {{ risk_percentage }}% Risk
+                        </span>
+                    </div>
+                    
+                    <div class="progress shadow-sm" style="height: 12px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated 
+                             {% if risk_percentage >= threshold_percentage %}bg-danger{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ risk_percentage }}%" 
+                             aria-valuenow="{{ risk_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    
+                    <div class="text-muted small mt-2">
+                        <i class="bi bi-info-circle-fill text-primary"></i> 
+                        System is configured to auto-flag accounts exceeding a <strong>{{ threshold_percentage }}%</strong> risk threshold.
+                    </div>
+                </div>
+
+                <div class="mb-3 mt-4">
                     <p class="mb-1 fw-bold small text-muted" style="font-size:0.72rem;">WHY DID THE AI DECIDE THIS?</p>
                     <ul class="small ps-3 mb-0" style="color: var(--text-secondary);">
                         {% for item in explanation %}

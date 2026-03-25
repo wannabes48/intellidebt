@@ -390,7 +390,7 @@
                 y: {
                     beginAtZero: true,
                     grid: { color: '#F3F4F6', drawBorder: false },
-                    ticks: { font: { size: 11, family: 'Inter' }, color: '#9CA3AF', callback: function(v) { return '$' + (v/1000) + 'k'; } }
+                    ticks: { font: { size: 11, family: 'Inter' }, color: '#9CA3AF', callback: function(v) { return 'KES' + (v*1000); } }
                 },
                 x: {
                     grid: { display: false },

@@ -15,6 +15,7 @@ class LoanMLSystem:
             'Collateral_Value', 'Outstanding_Loan_Amount', 'Monthly_EMI', 
             'Num_Missed_Payments', 'Days_Past_Due'
         ]
+        self.custom_threshold = 0.50 # Default threshold
         self.load_system()
 
     def load_system(self):
@@ -32,9 +33,14 @@ class LoanMLSystem:
             self.cluster_scaler = model_data['cluster_scaler']
             self.segment_map = model_data['segment_map']
             self.features_list = model_data['features_list']
+            self.custom_threshold = model_data.get('custom_threshold', 0.50)
             print("✅ ML Models loaded successfully from disk!")
         else:
             print(f"WARNING: Model file not found at {model_path}.")
+
+    def get(self, key, default=None):
+        """Allows dictionary-like access to system attributes (e.g., custom_threshold)"""
+        return getattr(self, key, default)
 
     def predict_risk(self, features_dict):
         if not self.classifier:

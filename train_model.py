@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import classification_report, precision_score, recall_score, f1_score
 
 def build_and_save_model():
     print("Loading CSV data...")
@@ -79,18 +80,38 @@ def build_and_save_model():
     grid_search.fit(X, y)
     
     print(f"🏆 Best parameters found: {grid_search.best_params_}")
-    best_classifier = grid_search.best_estimator_ # Extract the champion model
+    best_classifier = grid_search.best_estimator_
     
-    print("Saving upgraded model to disk...")
+    # ==========================================
+    # UPGRADE 3: CUSTOM DECISION THRESHOLD
+    # ==========================================
+    CUSTOM_THRESHOLD = 0.40 # Lowering from 0.50 to 0.40 to boost Recall!
+    
+    print(f"\nEvaluating Model with Custom Threshold: {CUSTOM_THRESHOLD}")
+    # Instead of getting a strict 1 or 0, we ask the AI for the EXACT percentage of risk
+    y_probabilities = best_classifier.predict_proba(X)[:, 1] 
+    
+    # Apply our custom rule: If risk is >= 40%, flag them as a defaulter (1)
+    y_pred_custom = (y_probabilities >= CUSTOM_THRESHOLD).astype(int)
+    
+    # Calculate the new, improved metrics
+    new_precision = precision_score(y, y_pred_custom)
+    new_recall = recall_score(y, y_pred_custom)
+    new_f1 = f1_score(y, y_pred_custom)
+    
+    print(f"📈 NEW METRICS --> Precision: {new_precision:.1%}, Recall: {new_recall:.1%}, F1-Score: {new_f1:.1%}")
+
+    print("\nSaving upgraded model to disk...")
     model_data = {
         'classifier': best_classifier,
         'kmeans': kmeans,
         'cluster_scaler': cluster_scaler,
         'segment_map': segment_map,
-        'features_list': features_list
+        'features_list': features_list,
+        'custom_threshold': CUSTOM_THRESHOLD # <--- Save the threshold here!
     }
     joblib.dump(model_data, 'loan_ml_model.joblib')
-    print("✅ Success! The 'loan_ml_model.joblib' brain is fully optimized.")
+    print("✅ Success! The threshold-optimized model is saved.")
 
 if __name__ == '__main__':
     build_and_save_model()

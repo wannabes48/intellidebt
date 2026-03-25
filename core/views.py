@@ -328,12 +328,15 @@ def loan_detail(request, loan_id):
     if loan.status == 'Paid' or loan.outstanding_amount <= 0:
         # Hardcode the perfect score for closed loans
         risk_score = 0.0
+        risk_percentage = 0.0
+        threshold_percentage = int(ml_system.get('custom_threshold', 0.50) * 100)
         explanation = ["Loan has been fully repaid. Zero risk."]
         recommendation = "Loan Closed. No further action required. Good job!"
         
         # Ensure the database matches this perfect state
         if loan.predicted_default_risk != 0.0:
             loan.predicted_default_risk = 0.0
+            loan.risk_percentage = 0.0
             loan.save()
     
     else:
@@ -515,6 +518,7 @@ def add_payment(request, loan_id):
                 loan.outstanding_amount = 0
                 loan.status = 'Paid'
                 loan.predicted_default_risk = 0.0
+                loan.risk_percentage = 0.0
                 loan.risk_explanation = "Loan has been fully repaid. Zero risk."
                 messages.success(request, "Payment recorded. Loan is now fully PAID!")
             else:
@@ -634,7 +638,13 @@ def loan_list(request):
 
     # 5. Attach display helpers
     for loan in page_obj:
-        if loan.risk_percentage is not None:
+        # Check if the loan is closed/paid
+        if loan.status == 'Paid' or loan.outstanding_amount <= 0:
+            loan.risk_score_display = 0.0
+            loan.risk_percentage = 0.0
+            loan.risk_badge_color = "success"
+            loan.risk_label = "Closed"
+        elif loan.risk_percentage is not None:
             loan.risk_score_display = round(loan.risk_percentage, 1) 
             
             # thresholds for badges (consistent with progress bar colors)

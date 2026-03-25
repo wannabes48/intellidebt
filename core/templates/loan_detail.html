@@ -6,6 +6,7 @@
     <div class="col-md-8">
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <a href="{% url 'loan_list' %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i>Go Back</a>
                 <h6 class="m-0 fw-bold" style="color: var(--primary);">
                     <i class="bi bi-wallet2 me-2"></i>Loan #{{ loan.id }} — {{ loan.client.name }}
                 </h6>

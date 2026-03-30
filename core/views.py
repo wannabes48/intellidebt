@@ -702,7 +702,8 @@ def client_list(request):
     if query:
         clients = clients.filter(
             Q(name__icontains=query) | 
-            Q(contact__icontains=query) |
+            Q(phone_number__icontains=query) |
+            Q(email__icontains=query) |
             Q(employment_type__icontains=query)
         )
 

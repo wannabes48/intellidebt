@@ -1,0 +1,14 @@
+# Git and environments
+.git/
+venv/
+env/
+__pycache__/
+*.pyc
+
+# Local database and sensitive secrets
+db.sqlite3
+.env
+
+# MacOS/Windows hidden files
+.DS_Store
+Thumbs.db

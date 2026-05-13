@@ -82,10 +82,18 @@ WSGI_APPLICATION = "intellidebt.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+    # 1. Your Local Database (Used for local development and testing)
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    },
+    
+    # 2. Your Cloud Database (Supabase)
+    'supabase': dj_database_url.config(
+        # Make sure DATABASE_URL is still in your .env file!
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        conn_health_checks=True,
+        ssl_require=True
     )
 }
 
